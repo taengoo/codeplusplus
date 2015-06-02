@@ -1,0 +1,63 @@
+
+//
+// Load core variables and mixins
+// --------------------------------------------------
+
+@import "variables.less";
+@import "mixins.less";
+
+
+
+//
+// Load core variables and mixins
+// --------------------------------------------------
+body {
+  color: #999;
+  padding-top: 70px;
+  background-color: #333;
+}
+
+.container {
+  max-width: 800px
+}
+
+pre {
+  margin: 0 0 -10px;
+  padding: 0;
+  background-color: #333;
+  border-radius: 0;
+  border: none;
+}
+
+pre code {
+  font-size: 90%;
+}
+
+.page-heading {
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 24px;
+
+    &.page-title {
+      border-bottom: 1px solid #999;
+    }
+  }
+
+  p.lead {
+    font-size: 18px;
+  }
+
+}
+
+// Contextual variations
+.panel-code-text {
+  background-color: #333;
+  border-radius: 0;
+
+  .panel-variant(#23241F; #999; #23241F; #23241F);
+}
