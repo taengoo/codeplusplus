@@ -19,6 +19,8 @@
 
     <link href="dist/css/highlight-default.css" rel="stylesheet">
     <link href="dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -55,18 +57,21 @@
       <div class="page-heading">
       	<h1 class="page-title">Page Title</h1>
       	<p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed scelerisque maximus consectetur. Sed sed diam lobortis, rutrum leo vitae, aliquet nunc.</p>
-    	</div>
+      </div>
 
-    	<div class="panel-group">
-    		<div class="panel panel-code-text">
-    			<div class="panel-heading">
-    				<h4 class="panel-title"><a href="#content1" data-toggle="collapse" data-parent="#content">Content 1</a></h4>
-    			</div>
-    			<div class="panel-collapse collapse in" id="content1">
-    				<div class="panel-body">
+      <h3 class="section-header">Section Title</h3>
+      <p><?php echo nl2br("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed scelerisque maximus consectetur. Sed sed diam lobortis, rutrum leo vitae, aliquet nunc."); ?></p>
 
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci. </p>
-<pre><code class="javascript">
+      <div class="panel-group">
+    	<div class="panel panel-code-text">
+    	  <div class="panel-heading">
+    		<h4 class="panel-title"><a href="#content1" data-toggle="collapse" data-parent="#content">Content 1</a></h4>
+    	  </div>
+    	  <div class="panel-collapse collapse in" id="content1">
+    		<div class="panel-body">
+
+<p><?php echo nl2br("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci."); ?></p>
+<pre><code class="javascript"><?php echo htmlentities("
 $(document).ready(function(){
 	console.log('ready');
 
@@ -77,21 +82,22 @@ $(document).ready(function(){
 	test();
 });
 
+"); ?>
 </code>
 </pre>
 
-    				</div>
-    			</div>
     		</div>
+    	  </div>
+    	</div>
 
-    		<div class="panel panel-code-text">
-    			<div class="panel-heading">
-    				<h4 class="panel-title"><a href="#content2" data-toggle="collapse" data-parent="#content">Content 2</a></h4>
-    			</div>
-    			<div class="panel-collapse collapse" id="content2">
-    				<div class="panel-body">
+    	<div class="panel panel-code-text">
+    	  <div class="panel-heading">
+    		<h4 class="panel-title"><a href="#content2" data-toggle="collapse" data-parent="#content">Content 2</a></h4>
+    	  </div>
+    	  <div class="panel-collapse collapse" id="content2">
+    		<div class="panel-body">
 
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci. </p>
+<p><?php echo nl2br("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci."); ?></p>
 <pre><code class="html"><?php echo htmlentities('
 <!DOCTYPE html>
 <html lang="en">
@@ -107,16 +113,16 @@ $(document).ready(function(){
 </code>
 </pre>
 
-    				</div>
-    			</div>
     		</div>
+    	  </div>
+    	</div>
 
-    		<div class="panel panel-code-text">
-    			<div class="panel-heading">
-    				<h4 class="panel-title"><a href="#content3" data-toggle="collapse" data-parent="#content">Content 3</a></h4>
-    			</div>
-    			<div class="panel-collapse collapse" id="content3">
-    				<div class="panel-body">
+    	<div class="panel panel-code-text">
+    	  <div class="panel-heading">
+    		<h4 class="panel-title"><a href="#content3" data-toggle="collapse" data-parent="#content">Content 3</a></h4>
+    	  </div>
+    	  <div class="panel-collapse collapse" id="content3">
+    		<div class="panel-body">
 
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci. </p>
 <pre><code class="css">
@@ -127,7 +133,7 @@ body {
 }
 
 .container {
-  max-width: 800px
+  max-width: 800px;
 }
 
 pre {
@@ -139,11 +145,41 @@ pre {
 </code>
 </pre>
 
-    				</div>
-    			</div>
     		</div>
+    	  </div>
     	</div>
+      </div>
+	  
+      <h4 class="section-header">Sub-Section Title</h4>
+      <p><?php echo nl2br("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed scelerisque maximus consectetur. Sed sed diam lobortis, rutrum leo vitae, aliquet nunc."); ?></p>
 
+      <div class="panel panel-code-text">
+		<div class="panel-heading">
+          <h4 class="panel-title"><a href="#content4" data-toggle="collapse">Content 4</a></h4>
+		</div>
+		<div class="panel-collapse collapse in" id="content4">
+          <div class="panel-body">
+
+<p><?php echo nl2br("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sed nunc nisl. Maecenas nec arcu a velit dictum pellentesque et fermentum nibh. Nullam congue egestas mi, ac egestas ex consectetur et. Vestibulum sollicitudin interdum ornare. Donec lacus elit, congue id congue non, commodo nec lorem. Nunc finibus pulvinar velit, nec interdum nunc tincidunt porta. Maecenas in tortor orci."); ?></p>
+<pre><code class="html"><?php echo htmlentities('
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Test</title>
+	</head>
+	<body>
+		<h1 class="title">Test</h1>
+	</body>
+</html>
+
+'); ?>
+</code>
+</pre>
+
+		  </div>
+		</div>
+	  </div>
+	  
     </div><!-- /.container -->
 
 

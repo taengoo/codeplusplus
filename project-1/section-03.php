@@ -34,7 +34,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -440,7 +440,7 @@ the one with the lower z-index. The following screenshot demonstrates the z-inde
 "); ?>
       </p>
 	  
-	  <p><img src="img/ch3-img-004.jpg"></p>
+	  <p><img src="img/ch3-img-004.JPG"></p>
 	  
 	  <pre><code class="css"><?php echo htmlentities('
 .front {
@@ -459,8 +459,6 @@ the one with the lower z-index. The following screenshot demonstrates the z-inde
 The back face now covers the front face:
 "); ?>
       </p>
-	  
-	  <p><img src="img/ch3-img-004.jpg"></p>
 	  
 	  <pre><code class="css"><?php echo htmlentities('
 .card-flipped .front {
@@ -486,7 +484,7 @@ perspective view of the element:
 "); ?>
       </p>
 	  
-	  <p><img src="img/ch3-img-005.jpg"></p>
+	  <p><img src="img/ch3-img-005.JPG"></p>
 	  
       <p>
 <?php echo nl2br(
@@ -527,7 +525,7 @@ demonstrate the two different behaviors of the backface-visibility property.
 "); ?>
       </p>
 	  
-	  <p><img src="img/ch3-img-006.jpg"></p>
+	  <p><img src="img/ch3-img-006.JPG"></p>
 
       <h3 class="section-header">Creating a card matching memory game</h3>
       <p>
@@ -805,7 +803,7 @@ Open the html5games.matchgame.js file and put the following code inside:
 "); ?>
 </p>
 
-<pre><code class="css"><?php echo htmlentities('
+<pre><code class="javascript"><?php echo htmlentities('
 $(function(){
   // clone 12 copies of the card
   for(var i=0;i<11;i++){
