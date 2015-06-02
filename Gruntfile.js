@@ -18,7 +18,7 @@ module.exports = function (grunt) {
 
     // Task configuration.
     clean: {
-      dist: ['public/dist']
+      dist: ['dist']
     },
 
     concat: {
@@ -40,7 +40,7 @@ module.exports = function (grunt) {
           'assets/js/tab.js',
           'assets/js/affix.js'
         ],
-        dest: 'public/dist/js/<%= pkg.name %>.js'
+        dest: 'dist/js/<%= pkg.name %>.js'
       }
     },
 
@@ -50,7 +50,7 @@ module.exports = function (grunt) {
       },
       bootstrap: {
         src: '<%= concat.bootstrap.dest %>',
-        dest: 'public/dist/js/<%= pkg.name %>.min.js'
+        dest: 'dist/js/<%= pkg.name %>.min.js'
       }
     },
 
@@ -61,10 +61,10 @@ module.exports = function (grunt) {
           sourceMap: true,
           outputSourceFiles: true,
           sourceMapURL: '<%= pkg.name %>.css.map',
-          sourceMapFilename: 'public/dist/css/<%= pkg.name %>.css.map'
+          sourceMapFilename: 'dist/css/<%= pkg.name %>.css.map'
         },
         src: 'assets/less/bootstrap.less',
-        dest: 'public/dist/css/<%= pkg.name %>.css'
+        dest: 'dist/css/<%= pkg.name %>.css'
       },
       compileDefaultTheme: {
         options: {
@@ -72,10 +72,10 @@ module.exports = function (grunt) {
           sourceMap: true,
           outputSourceFiles: true,
           sourceMapURL: '<%= pkg.name %>-theme.css.map',
-          sourceMapFilename: 'public/dist/css/<%= pkg.name %>-theme.css.map'
+          sourceMapFilename: 'dist/css/<%= pkg.name %>-theme.css.map'
         },
         src: 'assets/less/theme.less',
-        dest: 'public/dist/css/<%= pkg.name %>-theme.css'
+        dest: 'dist/css/<%= pkg.name %>-theme.css'
       }
     },
 
@@ -96,13 +96,13 @@ module.exports = function (grunt) {
         options: {
           map: true
         },
-        src: 'public/dist/css/<%= pkg.name %>.css'
+        src: 'dist/css/<%= pkg.name %>.css'
       },
       defaultTheme: {
         options: {
           map: true
         },
-        src: 'public/dist/css/<%= pkg.name %>-theme.css'
+        src: 'dist/css/<%= pkg.name %>-theme.css'
       }
     },
 
@@ -113,12 +113,12 @@ module.exports = function (grunt) {
         noAdvanced: true
       },
       minifyCore: {
-        src: 'public/dist/css/<%= pkg.name %>.css',
-        dest: 'public/dist/css/<%= pkg.name %>.min.css'
+        src: 'dist/css/<%= pkg.name %>.css',
+        dest: 'dist/css/<%= pkg.name %>.min.css'
       },
       minifyDefaultTheme: {
-        src: 'public/dist/css/<%= pkg.name %>-theme.css',
-        dest: 'public/dist/css/<%= pkg.name %>-theme.min.css'
+        src: 'dist/css/<%= pkg.name %>-theme.css',
+        dest: 'dist/css/<%= pkg.name %>-theme.min.css'
       }
     },
 
@@ -128,7 +128,7 @@ module.exports = function (grunt) {
         banner: '<%= banner %>'
       },
       files: {
-        src: 'public/dist/css/*.css'
+        src: 'dist/css/*.css'
       }
     },
 
@@ -138,9 +138,9 @@ module.exports = function (grunt) {
       },
       dist: {
         expand: true,
-        cwd: 'public/dist/css/',
+        cwd: 'dist/css/',
         src: ['*.css', '!*.min.css'],
-        dest: 'public/dist/css/'
+        dest: 'dist/css/'
       }
     },
 
@@ -149,7 +149,7 @@ module.exports = function (grunt) {
         expand: true,
 		flatten: true,
         src: 'assets/fonts/**',
-        dest: 'public/dist/fonts/',
+        dest: 'dist/fonts/',
 		filter: 'isFile'
       }
     }
