@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="/dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="/dist/css/highlight-default.css" rel="stylesheet">
+    <link href="/dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 1.5</h1>
+      </div>
+
+      <h3 class="section-header">CREATING YOUR GAME’S STRUCTURE</h3>
+      <p>
+The code built so far has been a good way to exercise the canvas capabilities you’ll be using, but it<br />
+will need to be reorganized to turn it into a useful structure for a game. Now take a step back to<br />
+look at some of the patterns you want to use putting together the game.<br />
+      </p>
+
+      <h3 class="section-header">Building Object-Oriented JavaScript</h3>
+      <p>
+JavaScript is an object-oriented (OO) language. As such, most elements in JavaScript are objects<br />
+including strings, arrays, functions and, well, objects are objects in the OO sense.<br />
+<br />
+But this doesn’t mean that JavaScript has all the trappings of object-oriented programming (OOP)<br />
+that you might expect. First, it doesn't have a classical inheritance model. Second, it doesn't have a<br />
+standard constructor mechanism, relying instead on either constructor functions or object literals.<br />
+<br />
+Instead of classical inheritance, JavaScript implements prototypical inheritance, meaning you can<br />
+create an object that represents the prototype, or blueprint, for a set of descendant objects that all<br />
+share the same base functionality.<br />
+      </p>
+
+	  <br>
+	  
+      <div class="panel panel-code-text">
+		<div class="panel-heading">CLASSICAL VERSUS PROTOTYPICAL INHERITANCE</div>
+        <div class="panel-body">
+
+<p>Most popular object-oriented languages used today, including Java and C++,<br />
+rely on classical inheritance, which means object behavior is defined by creating<br />
+explicit classes and instantiating objects from those classes. JavaScript has a<br />
+much more fluid method of defining classes based on the idea of prototypes, which<br />
+means you create an actual object that behaves the way you want and then create<br />
+child objects off of that.<br />
+</p>
+		</div>
+	  </div>
+	  
+      <p>
+Because methods are just regular JavaScript objects, many times developers also simply copy<br />
+attributes from other objects to fake Java-style interfaces or multiple inheritance. This flexibility<br />
+shouldn’t necessarily be viewed as a problem; rather, it means that developers have a lot of flexibility<br />
+for how to create objects and can pick the best method for the specific use case.<br />
+<br />
+Alien Invasion uses constructor functions combined with prototypical inheritance where it makes<br />
+sense. Using object prototypes can make object creation up to 50 times faster and provides memory<br />
+savings, but it is also more restricting because you can’t use closures to access and protect data.<br />
+Closures are a feature of JavaScript that allows you to keep variables in a method around for later<br />
+use even when a method has finished execution.<br />
+<br />
+Chapter 9, “Bootstrapping the Quintus Engine: Part I,” discusses object-creation patterns in more<br />
+detail, but for now just realize that the use of different methods is intentional.<br />
+      </p>
+
+      <h3 class="section-header">Taking Advantage of Duck Typing</h3>
+      <p>
+There’s a famous saying that if it walks like a duck and talks like a duck, then it must be a duck.<br />
+When programming in strongly-typed languages, there’s no doubt whether it’s a duck—it must be<br />
+an instance of the “Duck” class, or if you program in Java, implement the iDuck interface.<br />
+<br />
+In JavaScript, a dynamically-typed language, parameters, and references are not type-checked,<br />
+meaning you can pass any type of object as a parameter to any function, and that function happily<br />
+treats that object like the type of whatever object it was expecting until something blows up.<br />
+<br />
+This flexibility can be both a good and a bad thing. It’s a bad thing when you end up with cryptic<br />
+error messages or errors during run time. It’s a good thing when you use that flexibility to keep a<br />
+shallow inheritance tree but can still share code. The idea of using objects based on their external<br />
+interface rather than their type is called duck typing.<br />
+<br />
+Alien Invasion uses this idea in a couple of places: game screens and sprites. The game treats anything<br />
+that responds to method calls of step() and draw() as valid game screen objects or valid sprites.<br />
+Using duck typing for game screens enables Alien Invasion to treat title screens and in-game screens<br />
+as the same type of object, making it easy to switch between levels and title screens. Similarly, using<br />
+duck typing for sprites means that the game can be flexible with what can be added to a game board,<br />
+including the player, enemies, projectiles, and HUD elements. HUD, which is short for Heads Up<br />
+Display, is the term commonly used for elements that sit on top of the game, such as number of lives<br />
+left and the player’s score.<br />
+      </p>
+
+      <h3 class="section-header">Creating the Three Principle Objects</h3>
+      <p>
+The game needs three principle, mostly persistent objects: a Game object tying everything together; a<br />
+SpriteSheet object for loading and drawing sprites; and a GameBoard object for displaying, updating,<br />
+and handling the collision of sprite elements. The game also needs a gaggle of different sprites<br />
+such as the player, enemies, missiles, and HUD objects, such as the score and number of remaining<br />
+lives, but those are introduced individually later.<br />
+      </p>
+	  
+	  <br>
+	  <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/dist/js/test.min.js"></script>
+    <script src="/dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>
