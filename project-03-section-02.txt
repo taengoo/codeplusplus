@@ -1,0 +1,901 @@
+
+SECTION 2: Understanding Node.js
+
+2.1 Variables
+	- Numbers
+	- Boolean
+	- Arrays
+	- Object Literals
+2.2 Functions
+	- Functions 101
+	- Immediately Executing Function
+	- Anonymous Function
+	- Higher-Order Functions
+2.3 Closures
+2.4 Understanding Node.js Performance
+	- The I/O Scaling Problem
+	- Traditional Web Servers Using a Process Per Request
+	- Traditional Web Servers Using a Thread Pool
+	- The Nginx Way
+	- Node.js Performance Secret
+2.5 More Node.js Internals
+	- Thread Starvation
+	- Data-Intensive Applications
+	- The V8 JavaScript Engine
+2.6 More JavaScript
+	- Everything Is a Reference
+	- Default Values
+	- Exact Equality
+	- null
+	- Truthy and Falsy
+	- Revealing Module Pattern
+	- Understanding this
+	- Understanding Prototype
+	- Error Handling
+2.7 Summary
+	- Works Cited
+
+
+----
+SECTION 2: Understanding Node.js
+----
+To understand how Node.js works, first you need to understand a few key features of JavaScript that make it well suited for server-side development. JavaScript is a simple language, but it is also extremely flexible. This flexibility is the reason why it has stood the test of time. First-class functions and closures make it an ideal language for web applications.
+
+JavaScript has a bad reputation for being unreliable. However, this notion couldn’t be further from the truth. Actually, JavaScript’s bad reputation comes from the DOM’s unreliability. The DOM (docment object model) is the API (application programming interface) that browser vendors provide to interact with the browser using JavaScript. The DOM has idiosyncrasies between browser vendors. However, JavaScript the language is well-defined and can be used reliably across browsers and Node.js. In this chapter, we discuss a few fundamentals of JavaScript followed by how Node.js used JavaScript to provide a highly performant platform for web applications. Other people complain about how JavaScript handles programming errors (it tries to make invalid code work). However, in such cases, the developers are really to blame, as they need to be careful when working with a highly dynamic language.
+
+
+----
+2.1 Variables
+----
+Variables are defined in JavaScript using the var keyword. For example, the following code segment creates a variable foo and logs it to the console. (See Listing 2-1.) As you saw in the previous chapter, you would run this code from your console (terminal on Mac OS X and cmd on Windows) using node variable.js.
+
+Listing 2-1. variable.js
+var foo = 123;
+console.log(foo); // 123
+
+The JavaScript runtime (the browser or Node.js) has the opportunity to define a few global variables that we can use in our code. One of them is the console object, which we have been using up to this point. The console object contains a member function (log), which takes any number of arguments and prints them to the console. We will discuss more global objects as they are used. As you will see, JavaScript contains most things you expect a good programming language to have.
+
+----
+Numbers
+----
+All numbers in JavaScript have the same floating point number type. Arithmetic operations (+,-,*,/,%) work on numbers as you would expect, as shown in Listing 2-2.
+
+Listing 2-2. numbers.js
+var foo = 3;
+var bar = 5;
+console.log(foo + 1);   // 4
+console.log(foo / bar); // 0.6
+console.log(foo * bar); // 15
+console.log(foo - bar); // -2;
+console.log(foo % 2);   // remainder: 1
+
+----
+Boolean
+----
+Two literals are defined for boolean values: true and false. You can assign these to variables and apply boolean operations to them as you would expect. (See Listing 2-3.)
+
+Listing 2-3. boolean.js
+var foo = true;
+console.log(foo); // true
+
+// Boolean operations (&&, ||, !) work as expected:
+console.log(true && true);   // true
+console.log(true && false);  // false
+console.log(true || false);  // true
+console.log(false || false); // false
+console.log(!true);          // false
+console.log(!false);         // true
+
+----
+Arrays
+----
+You can create arrays quite easily in JavaScript using []. Arrays have many useful functions, a few of which are shown in Listing 2-4.
+
+Listing 2-4. arrays.js
+var foo = [];
+
+foo.push(1);         // add at the end
+console.log(foo);    // prints [1]
+
+foo.unshift(2);      // add to the top
+console.log(foo);    // prints [2,1]
+
+// Arrays are zero index based:
+console.log(foo[0]); // prints 2
+
+----
+Object Literals
+----
+By explaining these few fundamental types, we have introduced you to object literals. The most common way of creating an object in JavaScript is using the object notation, {}. Objects can be extended arbitrarily at runtime. An example is shown in Listing 2-5.
+
+Listing 2-5. objectLiterals1.js
+var foo = {};
+console.log(foo); // {}
+foo.bar = 123;    // extend foo
+console.log(foo); // { bar: 123 }
+
+Instead of extending it at runtime, you can define which properties go on an object upfront by using the object literal notation shown in Listing 2-6
+
+Listing 2-6. objectLiterals2.js
+var foo = {
+    bar: 123
+};
+console.log(foo); // { bar: 123 }
+
+You can additionally nest object literals inside object literals, as shown in Listing 2-7.
+
+Listing 2-7. objectLiterals3.js
+var foo = {
+    bar: 123,
+    bas: {
+        bas1: 'some string',
+        bas2: 345
+    }
+};
+console.log(foo);
+
+And, of course, you can have arrays inside object literals as well, as shown in Listing 2-8.
+
+Listing 2-8. objectLiterals4.js
+var foo = {
+    bar: 123,
+    bas: [1, 2, 3]
+};
+console.log(foo);
+
+And, you can also have these arrays themselves contain object literals, as you can see in Listing 2-9.
+
+Listing 2-9. objectLiterals5.js
+var foo = {
+    bar: 123,
+    bas: [{
+        qux: 1
+    },
+    {
+        qux: 2
+    },
+    {
+        qux: 3
+    }]
+};
+console.log(foo.bar);        // 123
+console.log(foo.bas[0].qux); // 1
+console.log(foo.bas[2].qux); // 2
+
+Object literals are extremely handy as function arguments and return values.
+
+
+----
+2.2 Functions
+----
+Functions are really powerful in JavaScript. Most of the power of JavaScript comes from the way it handles the function type. We will examine functions in JavaScript in progressively more involved examples that follow.
+
+----
+Functions 101
+----
+A normal function structure in JavaScript is defined in Listing 2-10.
+
+Listing 2-10.. functionBody.js
+function functionName() {
+    // function body
+    // optional return;
+}
+
+All functions return a value in JavaScript. In the absence of an explicit return statement, a function returns undefined. When you execute the code in Listing 2-11, you get undefined on the console.
+
+Listing 2-11. functionReturn.js
+function foo() { return 123; }
+console.log(foo()); // 123
+
+function bar() { }
+console.log(bar()); // undefined
+
+We will discuss undefined functions more in this chapter when we look at default values.
+
+----
+Immediately Executing Function
+----
+You can execute a function immediately after you define it. Simply wrap the function in parentheses () and invoke it, as shown in Listing 2-12.
+
+Listing 2-12. ief1.js
+(function foo() {
+    console.log('foo was executed!');
+})();
+
+The reason for having an immediately executing function is to create a new variable scope. An if, else, or while does not create a new variable scope in JavaScript. This fact is demonstrated in Listing 2-13.
+
+Listing 2-13. ief2.js
+var foo = 123;
+if (true) {
+    var foo = 456;
+}
+console.log(foo); // 456;
+
+The only recommended way of creating a new variable scope in JavaScript is using a function. So, in order to create a new variable scope, we can use an immediately executing function, as shown in Listing 2-14.
+
+Listing 2-14. ief3.js
+var foo = 123;
+if (true) {
+    (function () { // create a new scope
+        var foo = 456;
+    })();
+}
+console.log(foo); // 123;
+
+Notice that we choose to avoid needlessly naming the function. This is called an anonymous function, which we will explain next.
+
+----
+Anonymous Function
+----
+A function without a name is called an anonymous function. In JavaScript, you can assign a function to a variable. If you are going to use a function as a variable, you don’t need to name the function. Listing 2-15 demonstrates two ways of defining a function inline. Both of these methods are equivalent.
+
+Listing 2-15. anon.js
+var foo1 = function namedFunction() { // no use of name, just wasted characters
+    console.log('foo1');
+}
+foo1(); // foo1
+
+var foo2 = function () {              // no function name given i.e. anonymous function
+    console.log('foo2');
+}
+foo2(); // foo2
+
+A programming language is said to have first-class functions if a function can be treated the same way as any other variable in the language. JavaScript has first-class functions.
+
+----
+Higher-Order Functions
+----
+Since JavaScript allows us to assign functions to variables, we can pass functions to other functions. Functions that take functions as arguments are called higher-order functions. A very common example of a higher-order function is setTimeout. This is shown in Listing 2-16.
+
+Listing 2-16. higherOrder1.js
+setTimeout(function () {
+    console.log('2000 milliseconds have passed since this demo started');
+}, 2000);
+
+If you run this application in Node.js, you will see the console.log message after two seconds and then the application will exit. Note that we provided an anonymous function as the first argument to setTimeout. This makes setTimeout a higher-order function.
+
+It is worth mentioning that there is nothing stopping us from creating a function and passing that in. An example is shown in Listing 2-17.
+
+Listing 2-17. higherOrder2.js
+function foo() {
+    console.log('2000 milliseconds have passed since this demo started');
+}
+setTimeout(foo, 2000);
+
+Now that we have a firm understanding of object literals and functions, we can examine the concept of closures.
+
+
+----
+2.3 Closures
+----
+Whenever we have a function defined inside another function, the inner function has access to the variables declared in the outer function. Closures are best explained with examples.
+
+In Listing 2-18, you can see that the inner function has access to a variable (variableInOuterFunction) from the outer scope. The variables in the outer function have been closed by (or bound in) the inner function. Hence the term closure. The concept in itself is simple enough and fairly intuitive.
+
+Listing 2-18. closure1.js
+function outerFunction(arg) {
+    var variableInOuterFunction = arg;
+
+    function bar() {
+        console.log(variableInOuterFunction); // Access a variable from the outer scope
+    }
+
+    // Call the local function to demonstrate that it has access to arg
+    bar();
+}
+
+outerFunction('hello closure!');              // logs hello closure!
+
+Now the awesome part: The inner function can access the variables from the outer scope even after the outer function has returned. This is because the variables are still bound in the inner function and not dependent on the outer function. Listing 2-19. shows an example.
+
+Listing 2-19. closure2.js
+function outerFunction(arg) {
+    var variableInOuterFunction = arg;
+    return function () {
+        console.log(variableInOuterFunction);
+    }
+}
+
+var innerFunction = outerFunction('hello closure!');
+
+// Note the outerFunction has returned
+innerFunction(); // logs hello closure!
+
+Now that we have an understanding of first-class functions and closures, we can look at what makes JavaScript a great language for server-side programming.
+
+
+----
+2.4 Understanding Node.js Performance
+----
+Node.js is focused on creating highly performant applications. In the following section, we introduce the I/O scaling problem. Then we show how it has been solved traditionally, followed by how Node.js solves it.
+
+----
+The I/O Scaling Problem
+----
+Node.js is focused on being the best way to write highly performant web applications. To understand how it achieves this, we need to know about the I/O scaling problem. Let us look at a rough estimate of the speed at which we can access data from various sources in terms of CPU cycles (Figure 2-1).
+
+Figure 2-1. Comparing common I/O sources
+
+You can clearly see that Disk and Network access is in a completely different category from accessing data that is available in RAM and CPU cache.
+
+Most web applications depend on reading data from disk or from another network source (for example, a database query). When an HTTP request is received and we need to load data from a database, typically this request will be spent waiting for a disk read or a network access call to complete.
+
+These open connections and pending requests consume server resources (memory and CPU). In order to handle a large number of requests from different clients using the same web server, we have the I/O scaling problem.
+
+----
+Traditional Web Servers Using a Process Per Request
+----
+Traditional servers used to spin up a new process to handle every single web request. Spinning a new process for each request is an expensive operation, both in terms of CPU and memory. This is the way technologies like PHP used to work when they were first created.
+
+A demonstration of this concept is shown in Figure 2-2. In order to successfully reply to an HTTP request “A,” we need some data from a database. This read can potentially take a long time. For this entire read duration, we will have a process taking up CPU and memory while idling and waiting for the database response. Also, processes are slow to start and have a significant overhead in terms of RAM space. This does not scale for very long and that is the reason why modern web applications use a thread pool.
+
+Figure 2-2. Traditional web server using Processes
+
+----
+Traditional Web Servers Using a Thread Pool
+----
+Modern servers use a thread from a thread pool to serve each request. Since we already have a few Operating System (OS) threads created (hence a thread pool), we do not pay the penalty of starting and stopping OS processes (which are expensive to create and take up much more memory than a thread). When a request comes in, we assign a thread to process this request. This thread is reserved for the request in the entire duration that the request is being handled, as demonstrated in Figure 2-3.
+
+Figure 2-3. Traditional web server using a thread pool
+
+Because we save the overhead of creating a new process every time and the threads are lighter than processes, this method is much better than the original server design. Most web servers used this method a few years back and many continue to use today. However, this method is not without drawbacks. Again there is wasting of RAM between threads. Also the OS needs to context switch between threads (even when they are idle), and this results in wasted CPU resources.
+
+----
+The Nginx Way
+----
+We have seen that creating separate processes and separate threads to handle requests results in wasted OS resources. The way Node.js works is that there is a single thread handling requests. The idea that a single threaded server can perform better than a thread pool server is not new to Node.js. Nginx is built on this principle.
+
+Nginx is a single-threaded web server and can handle a tremendous amount of concurrent requests. A simple benchmark comparing Nginx to Apache, both serving a single static file from the file system, is shown in Figure 2-4.
+
+Figure 2-4. Nginx vs. Apache requests/second vs. concurrent open connections
+
+As you can see, when the number of concurrent connections goes up, Nginx can handle a lot more requests per second than Apache. What is more interesting is the memory consumption, as shown in Figure 2-5.
+
+Figure 2-5. Nginx vs. Apache memory usage vs. concurrent connections
+
+With more concurrent connections, Apache needs to manage more threads and therefore consumes much more memory, whereas Nginx stays at a steady level.
+
+----
+Node.js Performance Secret
+----
+There is a single execution thread in JavaScript. This is the way web browsers have traditionally worked. If you have a long-running operation (such as waiting for a timer to complete or a database query to return), you must continue operation using a callback. Listing 2-20. provides a simple demo that uses the JavaScript runtime setTimeout function to simulate a long-running operation. You can run this code using Node.js.
+
+Listing 2-20. simulateUserClick.js
+function longRunningOperation(callback) {
+    // simulate a 3 second operation
+    setTimeout(callback, 3000);
+}
+
+function userClicked() {
+    console.log('starting a long operation');
+    longRunningOperation(function () {
+        console.log('ending a long operation');
+    });
+}
+// simulate a user action
+userClicked();
+
+This simulation is possible in JavaScript because we have first-class functions and passing functions—a callback is a well-supported pattern in the language. Things become interesting when you combine first-class functions with the concept of closures. Let us image that we are handling a web request and we have a long-running operation such as a database query that we need to do. A simulated version is shown in Listing 2-21.
+
+Listing 2-21. simulateWebRequest.js
+function longRunningOperation(callback) {
+    // simulate a 3 second operation
+    setTimeout(callback, 3000);
+}
+
+function webRequest(request) {
+    console.log('starting a long operation for request:', request.id);
+    longRunningOperation(function () {
+        console.log('ending a long operation for request:', request.id);
+    });
+}
+// simulate a web request
+webRequest({ id: 1 });
+// simulate a second web request
+webRequest({ id: 2 });
+
+In Listing 2-21, because of closures, we have access to the correct user request after the long-running operation completes. We just handled two requests on a single thread without breaking a sweat. Now you should understand the following statement: “Node.js is highly performant, and it uses JavaScript because JavaScript supports first-class functions and closures.”
+
+The immediate question that should come to mind when someone tells you that you only have a single thread to handle requests is, “But my computer has a quad core CPU. Using only a single thread will surely waste resources.” And the answer is that yes it will. However, there is a well-supported way around it that we will examine in Chapter 13 when discussing deployment and scalability. Just a quick tip about what you will see there: It is actually really simple to use all the CPU cores with a separate JavaScript process for each CPU core using Node.js.
+
+It is also important to note that there are threads managed by Node.js at the C level (such as for certain file system operations), but all the JavaScript executes in a single thread. This gives you the performance advantage of the JavaScript almost completely owning at least one thread.
+
+
+----
+2.5 More Node.js Internals
+----
+It is not terribly important to understand the internals of how Node.js works, but a bit more discussion make you more aware of the terminology when you discuss Node.js with your peers. At the heart of Node.js is an event loop.
+
+Event loops enable any GUI application to work on any operating system. The OS calls a function within your application when something happens (for example, the user clicks a button), and then your application executes the logic contained inside this function to completion. Afterward, your application is ready to respond to new events that might have already arrived (and are there on the queue) or that might arrive later (based on user interaction).
+
+----
+Thread Starvation
+----
+Generally during the duration of a function called from an event in a GUI application, no other events can be processed. Consequently, if you do a long-running task within something like a click handler, the GUI will become unresponsive. This is something every computer user I have met has experienced at one point or another. This lack of availability of CPU resources is called starvation.
+
+Node.js is built on the same event loop principle as you find in GUI programs. Therefore, it too can suffer from starvation. To understand it better, let’s go through a few code examples. Listing 2-22. shows a small snippet of code that measures the time passed using console.time and console.timeEnd functions.
+
+Listing 2-22. timeit.js
+console.time('timer');
+setTimeout(function(){
+   console.timeEnd('timer');
+},1000)
+
+If you run this code, you should see a number quite close to what you would expect—in other words, 1000ms. This callback for the timeout is called from the Node.js event loop.
+
+Now let’s write some code that takes a long time to execute, for instance, a nonoptimized method of calculating the nth Fibonacci number as shown in Listing 2-23.
+
+Listing 2-23. largeOperation.js
+console.time('timeit');
+function fibonacci(n) {
+    if (n < 2)
+        return 1;
+    elses
+        return fibonacci(n - 2) + fibonacci(n - 1);
+}
+fibonacci(44);             // modify this number based on your system performance
+console.timeEnd('timeit'); // On my system it takes about 9000ms (i.e. 9 seconds)
+
+Now we have an event that can be raised from the Node.js event loop (setTimeout) and a function that can keep the JavaScript thread busy (fibonacci). We can now demonstrate starvation in Node.js. Let’s set up a time-out to execute. But before this time-out completes, we execute a function that takes a lot of CPU time and therefore holds up the CPU and the JavaScript thread. As this function is holding on to the JavaScript thread, the event loop cannot call anything else and therefore the time-out is delayed, as demonstrated in Listing 2-24.
+
+Listing 2-24. starveit.js
+// utility funcion
+function fibonacci(n) {
+    if (n < 2)
+        return 1;
+    else
+        return fibonacci(n - 2) + fibonacci(n - 1);
+}
+
+// setup the timer
+console.time('timer');
+setTimeout(function () {
+    console.timeEnd('timer'); // Prints much more than 1000ms
+}, 1000)
+
+// Start the long running operation
+fibonacci(44);
+
+One lesson here is that Node.js is not the best option if you have a high CPU task that you need to do on a client request in a multiclient server environment. However, if this is the case, you will be very hard-pressed to find a scalable software solution in any platform. Most high CPU tasks should take place offline and are generally offloaded to a database server using things such as materialized views, map reduce, and so on. Most web applications access the results of these computations over the network, and this is where Node.js shines—evented network I/O.
+
+Now that you understand what an event loop means and the implications of the fact that JavaScript portion of Node.js is single-threaded, let’s take another look at why Node.js is great for I/O applications.
+
+----
+Data-Intensive Applications
+----
+Node.js is great for data-intensive applications. As we have seen, using a single thread means that Node.js has an extremely low-memory footprint when used as a web server and can potentially serve a lot more requests. Consider the simple scenario of a data intensive application that serves a dataset from a database to clients via HTTP. We know that gathering the data needed to respond to the client query takes a long time compared to executing code and/or reading data from RAM. Figure 2-6 shows how a traditional web server with a thread pool would look while it is responding to just two requests.
+
+Figure 2-6. How a traditional server handles two requests
+
+The same server in Node.js is shown in Figure 2-7. All the work is going to be inside a single thread, which results in lesser memory consumption and, due to the lack of thread context switching, lesser CPU load. Implementation-wise, the handleClientRequest is a simple function that calls out to the database (using a callback). When that callback returns, it completes the request using the request object it captured with a JavaScript closure. This is shown in the pseudocode in Listing 2-25.
+
+Figure 2-7. How a Node.js server handles two requests
+
+Listing 2-25. handleClientRequest.js
+function handleClientRequest(request) {
+    makeDbCall(request.someInfo, function (result) {
+        // The request corresponds to the correct db result because of closure
+        request.complete(result);
+    });
+}
+
+Note that the HTTP request to the database is also managed by the event loop. The advantage of having async IO and why JavaScript + Node.js is a great fit for data-intensive applications should now be clear.
+
+----
+The V8 JavaScript Engine
+----
+It is worth mentioning that all the JavaScript inside Node.js is executed by the V8 JavaScript engine. V8 came into being with the Google Chrome project. V8 is the part of Chrome that runs the JavaScript when you visit a web page.
+
+Anybody who has done any web development knows how amazing Google Chrome has been for the web. The browser usage statistics reflect that quite clearly. According to w3schools.org (www.w3schools.com/browsers/browsers_stats.asp), nearly 56% of Internet users who visit their web site are now using Google Chrome. There are lots of reasons for this, but V8 and its speed is a very important factor. Besides speed, another reason for using V8 is that the Google engineers made it easy to integrate into other projects, and that it is platform independent.
+
+
+----
+2.6 More JavaScript
+----
+Now that we understand the motivation for using Node.js, let’s delve further into JavaScript so that we can write maintainable applications. In addition to the fact that you need to be good at JavaScript if you want to become a Node.js developer, another reason to be good at JavaScript is to take advantage of the thriving ecosystem around Node.js and JavaScript in general. The language with the greatest number of projects on GitHub is JavaScript. Node.js is the most popular server-side technology on GitHub, as shown in Figure 2-8, and the third most popular repository overall.
+
+Figure 2-8. Most popular repositories on GitHub
+
+----
+Everything Is a Reference
+----
+JavaScript was designed to be simple and work with limited computer resources. Whenever we assign one variable to another, JavaScript copies a reference to the variable. To understand what this means, have a look at Listing 2-26.
+
+Listing 2-26. reference1.js
+var foo = { bas: 123 };
+var bar = foo;
+bar.bas = 456;
+console.log(foo.bas); // 456
+
+Passing objects around in function calls is extremely lightweight no matter what the size of the object, since we only copy the reference to the object and not every single property of the object. To make true copies of data (that break the reference link), you can just create a new object literal as shown in Listing 2-27.
+
+Listing 2-27. reference2.js
+var foo = { bas: 123 };
+var bar = { bas: foo.bas }; // copy
+
+bar.bas = 456;              // change copy
+console.log(foo.bas);       // 123, original is unchanged
+
+We can use quite a few third-party libraries to copy properties for arbitrary JavaScript objects. (It is a simple function we can write ourselves if we wanted.) Such libraries are covered in Chapter 4.
+
+----
+Default Values
+----
+The default value of any variable in JavaScript is undefined. You can see it being logged out in Listing 2-28, where you create a variable but do not assign anything to it.
+
+Listing 2-28. default1.js
+var foo;
+console.log(foo); // undefined
+
+Similarly, a nonexistent property on a variable returns undefined (Listing 2-29).
+
+Listing 2-29. default2.js
+var foo = { bar: 123 };
+console.log(foo.bar); // 123
+console.log(foo.bas); // undefined
+
+----
+Exact Equality
+----
+One thing to be careful about in JavaScript is the difference between == and ===. As JavaScript tries to be resilient against programming errors, == tries to do type coercion between two variables. For example, it converts a string to a number so that you can compare it with a number, as shown in Listing 2-30.
+
+Listing 2-30. equal1.js
+console.log(5 == '5');  // true
+console.log(5 === '5'); // false
+
+However, the choices it makes are not always ideal. For example, in Listing 2-31, the first statement is false because ’’ and ‘0’ are both strings and are clearly not equal. However, in the second case, both ‘0’ and the empty string (’’) are falsy (in other words, they behave like false) and are therefore equal with respect to ==. Both statements are false when you use ===.
+
+Listing 2-31. equal2.js
+console.log('' == '0');  // false
+console.log('' == 0);    // true
+
+console.log('' === '0'); // false
+console.log('' === 0);   // false
+
+The tip here is to not compare different types to each another. Comparing different types of variables (such as a string with a number) is something you would not be able to do in a statically typed language anyway (a statically typed language is one where you must specify the type of a variable). If you keep this in mind, you can safely use ==. However, it is recommended that you always use === whenever possible.
+
+Similar to == vs. ===, there are the inequality operators != and !==, which work in the same way. In other words, != does type coercion, whereas !== is strict.
+
+----
+null
+----
+null is a special JavaScript object used to denote an empty object. This is different from undefined, which is used by JavaScript for nonexistent and noninitialized values. You should not set anything to undefined because, by convention, undefined is the default value you should leave to the runtime. A good time to use null is when you want to explicitly say that something is not there, such as as a function argument. You will see its usage in the section on error handling in this chapter.
+
+----
+Truthy and Falsy
+----
+One important concept in JavaScript is truthy values and falsy values. Truthy values are those that behave like true in boolean operations and falsy values are those that behave like false in boolean operations. It is generally easier to use if / else / ! for null / undefined instead of doing an explicit check. An example of the falsy nature of these values is shown in Listing 2-32.
+
+Listing 2-32. truthyandfalsy.js
+console.log(null == undefined);  // true
+console.log(null === undefined); // false
+
+// Are these all falsy?
+if (!false) {
+    console.log('falsy');
+}
+if (!null) {
+    console.log('falsy');
+}
+if (!undefined) {
+    console.log('falsy');
+}
+
+Other important falsy values are 0 and the empty string (''). All object literals and arrays are truthy in JavaScript.
+
+----
+Revealing Module Pattern
+----
+Functions that return objects are a great way to create similar objects. An object here means data and functionality bundled into a nice package, which is the most basic form of Object Oriented Programming (OOP) that one can do. At the heart of the revealing module pattern is JavaScript’s support for closures and ability to return arbitrary (function + data) object literals. Listing 2-33 is a simple example that shows how to create an object using this pattern.
+
+Listing 2-33. revealingModules.js
+function printableMessage() {
+    var message = 'hello';
+    function setMessage(newMessage) {
+        if (!newMessage) throw new Error('cannot set empty message');
+        message = newMessage;
+    }
+    function getMessage() {
+        return message;
+    }
+
+    function printMessage() {
+        console.log(message);
+    }
+
+    return {
+        setMessage: setMessage,
+        getMessage: getMessage,
+        printMessage: printMessage
+    };
+}
+
+// Pattern in use
+var awesome1 = printableMessage();
+awesome1.printMessage(); // hello
+
+var awesome2 = printableMessage();
+awesome2.setMessage('hi');
+awesome2.printMessage(); // hi
+
+// Since we get a new object everytime we call the module function
+// awesome1 is unaffected by awesome2
+awesome1.printMessage(); // hello
+
+The great thing about this example is that it is a simple pattern to understand because it only utilizes closures, first-class functions, and object literals—concepts that are already familiar to you and that we covered extensively in the beginning of this chapter.
+
+----
+Understanding this
+----
+The JavaScript keyword this has a very special place in the language. It is something that is passed to the function depending upon how you call it (somewhat like a function argument). The simplest way to think of it is that it refers to the calling context. The calling context is the prefix used to call a function. Listing 2-34. demonstrates its basic usage.
+
+Listing 2-34. this1.js
+var foo = {
+    bar: 123,
+    bas: function () {
+        console.log('inside this.bar is:', this.bar);
+    }
+}
+
+console.log('foo.bar is: ', foo.bar); // foo.bar is: 123
+foo.bas();                            // inside this.bar is: 123
+
+Inside the function bas, this refers to foo since bas was called on foo and is therefore the calling context. So, what is the calling context if I call a function without any prefix? The default calling context is the Node.js global variable, as shown in Listing 2-35.
+
+Listing 2-35. this2.js
+function foo() {
+    console.log('is this called from globals? : ', this === global); // true
+}
+foo();
+
+Note that if we were running it in the browser, the global variable would be window instead of global.
+
+Of course, since JavaScript has great support for first-class functions, we can attach a function to any object and change the calling context, as shown in Listing 2-36.
+
+Listing 2-36. this3.js
+var foo = {
+    bar: 123
+};
+
+function bas() {
+    if (this === global)
+        console.log('called from global');
+    if (this === foo)
+        console.log('called from foo');
+}
+
+// global context
+bas();     // called from global
+
+// from foo
+foo.bas = bas;
+foo.bas(); // called from foo
+
+There is one last thing you need to know about this in JavaScript. If you call a function with the new JavaScript operator, it creates a new JavaScript object and this within the function refers to this newly created object. Again, Listing 2-37 provides another simple example.
+
+Listing 2-37. this4.js
+function foo() {
+    this.foo = 123;
+    console.log('Is this global?: ', this == global);
+}
+
+// without the new operator
+foo(); // Is this global?: true
+console.log(global.foo); // 123
+
+// with the new operator
+var newFoo = new foo();  // Is this global?: false
+console.log(newFoo.foo); // 123
+
+You can see that we modified this.foo inside the function and newFoo.foo was set to that value.
+
+----
+Understanding Prototype
+----
+It is a common misunderstanding that JavaScript isn’t object-oriented. It is indeed true that until recently JavaScript has not had the class keyword. But functions in JavaScript are more powerful than they are in many other languages and can be used to mimic traditional object oriented principles. The secret sauce is the new keyword (which you have already seen) and a property called the prototype. Every object in JavaScript has an internal link to another object called the prototype. Before we look at creating traditional classes in JavaScript, let’s have a deeper look at prototype.
+
+When you read a property on an object (for example, foo.bar reads the property bar from foo), JavaScript checks that this property exists on foo. If not, JavaScript checks if the property exists on foo.__proto__ and so on till __proto__ itself is not present. If a value is found at any level, it is returned. Otherwise, JavaScript returns undefined (see Listing 2-38).
+
+Listing 2-38. prototype1.js
+var foo = {};
+foo.__proto__.bar= 123;
+console.log(foo.bar); // 123
+
+Although this works, the __ prefix in JavaScript is conventionally used for properties that should not be used by user code (in other words, private/internal implementation details). Therefore, you should not use __proto__ directly. The good news is that when you create an object using the new operator on a function, the __proto__ is set to the function’s .prototype member, whichcan be verified with a simple bit of code, as shown in Listing 2-39.
+
+Listing 2-39. prototype2.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create a object using `new`
+// foo.prototype will be copied to bas.__proto__
+var bas = new foo();
+
+// Verify the prototype has been copied
+console.log(bas.__proto__ === foo.prototype); // true
+console.log(bas.bar);                         // 123
+
+The reason why this is great is because prototypes are shared between all the objects (let’s call these instances) created from the same function. This fact is shown in Listing 2-40.
+
+Listing 2-40. prototype3.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create two instances
+var bas = new foo();
+var qux = new foo();
+
+// Show original value
+console.log(bas.bar); // 123
+console.log(qux.bar); // 123
+
+// Modify prototype
+foo.prototype.bar = 456;
+
+// All instances changed
+console.log(bas.bar); // 456
+console.log(qux.bar); // 456
+
+Imagine you need 1,000 instances created. All the functionality you put on prototype is shared. And therefore lesson one:prototype saves memory.
+
+Prototype is great for reading data off an object. However, if you set a property on the object, you break the link with the prototype because (as explained earlier) the prototype is only accessed if the property does not exist on the object. This disconnection from a prototype property caused by setting a property on an object is shown in Listing 2-41.
+
+Listing 2-41. prototype4.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create two instances
+var bas = new foo();
+var qux = new foo();
+
+// Overwrite the prototype value for bas
+bas.bar = 456;
+console.log(bas.bar); // 456 i.e. prototype not accessed
+
+// Other objects remain unaffected
+console.log(qux.bar); // 123
+
+You can see that when we modified bas.bar, bas.__proto__.bar was no longer accessed. Hence, lesson two: .prototype is not good for properties you plan on writing to.
+
+The question becomes what we should use for properties we need to write to. Recall from our discussion on this that this refers to the object that is created when the function is called with the new operator. So this is a perfect candidate for read/write properties and you should use it for all properties. But functions are generally not altered after creation. So functions are great candidates to go on .prototype. This way, functionality (functions/methods) is shared between all instances, and properties belong on individual objects. Now we can understand a pattern to write a class in JavaScript, which is shown in Listing 2-42.
+
+Listing 2-42. class.js
+// Class definition
+function someClass() {
+    // Properties go here
+    this.someProperty = 'some initial value';
+}
+// Member functions go here:
+someClass.prototype.someMemberFunction = function () {
+    /* Do something using this */
+    this.someProperty = 'modified value';
+}
+
+// Creation
+var instance = new someClass();
+
+// Usage
+console.log(instance.someProperty); // some initial value
+instance.someMemberFunction();
+console.log(instance.someProperty); // modified value
+
+Within the member function, we can get access to the current instance using this even though the same function body is shared between all instances. The reason should be obvious from our earlier discussion on this and the calling context. It is because we call a function on some instance, in other words, instance.someMemberFunction(). That is why inside the function this will refer to the instance used.
+
+The main difference here vs. the revealing module pattern is that functions are shared between all the instances and don’t take up memory for each new instance. This is because functions are only on .prototype and not on this. Most classes inside core Node.js are written using this pattern.
+
+----
+Error Handling
+----
+Error handling is an important part of any application. Errors can happen because of your code or even in code not in your controls, for example, database failure.
+
+JavaScript has a great exception handling mechanism that you might already be familiar with from other programming languages. To throw an exception, you simply use the throw JavaScript keyword. To catch an exception, you can use the catch keyword. For code you want to run regardless of whether an exception was caught or not, you can use the finally keyword. Listing 2-43. is a simple example that demonstrates this.
+
+Listing 2-43. error1.js
+try {
+    console.log('About to throw an error');
+    throw new Error('Error thrown');
+}
+catch (e) {
+    console.log('I will only execute if an error is thrown');
+    console.log('Error caught: ', e.message);
+}
+finally {
+    console.log('I will execute irrespective of an error thrown');
+}
+
+The catch section executes only if an error is thrown. The finally section executes despite any errors thrown within the try section. This method of exception handling is great for synchronous JavaScript. However, it will not work under an async workflow. Listing 2-44. demonstrates this shortcoming.
+
+Listing 2-44. error2.js
+try {
+    setTimeout(function () {
+        console.log('About to throw an error');
+        throw new Error('Error thrown');
+    }, 1000);
+}
+catch (e) {
+    console.log('I will never execute!');
+}
+
+console.log('I am outside the try block');
+
+The reason why it does not work is because at the point in time when the callback for setTimeout executes, we would already be outside the try/catch block. The setTimeout is going to call the function provided at a later point, and you can see that happen in this code sample since “I am outside the try block” is executed. The default behavior for uncaught exceptions in Node.js is to exit the process, and this is why our application crashes.
+
+The correct way of doing this is to handle the error inside the callback, as shown shown in Listing 2-45.
+
+Listing 2-45. error3.js
+setTimeout(function () {
+    try {
+        console.log('About to throw an error');
+        throw new Error('Error thrown');
+    }
+    catch (e) {
+        console.log('Error caught!');
+    }
+}, 1000);
+
+This method works fine from inside an async function. But now we have an issue of finding a way to tell the code outside about the error. Let’s look at a concrete example. Consider a simple getConnection function that takes a callback we need to call after a successful connection, as shown in Listing 2-46.
+
+Listing 2-46. error4.js
+function getConnection(callback) {
+    var connection;
+    try {
+        // Lets assume that the connection failed
+        throw new Error('connection failed');
+
+        // Notify callback that connection succeeded?
+    }
+    catch (error) {
+        // Notify callback about error?
+    }
+}
+
+We need to notify the callback about success and failure. This is why Node.js has a convention of calling callbacks with the first argument of error if there is an error. If there is no error, we call back with the error set to null. As a result, a getConnection function designed for the Node.js ecosystem would be something like what is shown in Listing 2-47.
+
+Listing 2-47. error5.js
+function getConnection(callback) {
+    var connection;
+    try {
+        // Lets assume that the connection failed
+        throw new Error('connection failed');
+
+        // Notify callback that connection succeeded?
+        callback(null, connection);
+    }
+    catch (error) {
+        // Notify callback about error?
+        callback(error, null);
+    }
+}
+
+// Usage
+getConnection(function (error, connection) {
+    if (error) {
+        console.log('Error:', error.message);
+    }
+    else {
+        console.log('Connection succeeded:', connection);
+    }
+});
+
+Having the error as the first argument ensures consistency in error checking. This is the convention followed by all Node.js functions that have an error condition. A good example of this is the file system API, which we cover in Chapter 3. Also note that developers tend to use the falsy nature of null to check for errors.
+
+
+----
+1.7 Summary
+----
+In this chapter, we discussed important JavaScript concepts necessary to to be successful with Node.js. You should now have a deep understanding of what makes JavaScript and Node.js great for creating data-intensive applications and why it performs better than the technologies that preceded it. In the next chapter, we will discuss more Node.js specific patterns and practices for creating maintainable applications.
+
+----
+Works Cited
+----
+Ryan Dahl (2009) Node.js from JSConf.
+
+“Nginx vs. Apache,” http://blog.webfaction.com/2008/12/a-little-holiday-present-10000-reqssec-with-nginx-2/
+
+“Browser Statistics,” http://www.w3schools.com/browsers/browsers_stats.asp
+
+“GitHub Repository Search by Stars,” https://github.com/search?o=desc&q=stars%3A%3E1&s=stars&type=Repositories
+
