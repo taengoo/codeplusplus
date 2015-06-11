@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="../../dist/css/highlight-default.css" rel="stylesheet">
+    <link href="../../dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 2.7</h1>
+      </div>
+
+      <h3 class="section-header">SUMMARY</h3>
+      <p>
+<?php echo nl2br(
+"In this chapter, we discussed important JavaScript concepts necessary to to be successful with Node.js. You should now have a deep understanding of what makes JavaScript and Node.js great for creating data-intensive applications and why it performs better than the technologies that preceded it. In the next chapter, we will discuss more Node.js specific patterns and practices for creating maintainable applications.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Works Cited</h3>
+      <p>
+<?php echo nl2br(
+"Ryan Dahl (2009) Node.js from JSConf.
+
+“Nginx vs. Apache,” http://blog.webfaction.com/2008/12/a-little-holiday-present-10000-reqssec-with-nginx-2/
+
+“Browser Statistics,” http://www.w3schools.com/browsers/browsers_stats.asp
+
+“GitHub Repository Search by Stars,” https://github.com/search?o=desc&q=stars%3A%3E1&s=stars&type=Repositories
+"); ?>
+      </p>
+	  
+	  <br>
+	  <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../dist/js/test.min.js"></script>
+    <script src="../../dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>

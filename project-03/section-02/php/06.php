@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="../../dist/css/highlight-default.css" rel="stylesheet">
+    <link href="../../dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 2.6</h1>
+      </div>
+
+      <h3 class="section-header">MORE JAVASCRIPT</h3>
+      <p>
+<?php echo nl2br(
+"Now that we understand the motivation for using Node.js, let’s delve further into JavaScript so that we can write maintainable applications. In addition to the fact that you need to be good at JavaScript if you want to become a Node.js developer, another reason to be good at JavaScript is to take advantage of the thriving ecosystem around Node.js and JavaScript in general. The language with the greatest number of projects on GitHub is JavaScript. Node.js is the most popular server-side technology on GitHub, as shown in Figure 2-8, and the third most popular repository overall.
+
+Figure 2-8. Most popular repositories on GitHub
+"); ?>
+      </p>
+
+      <h3 class="section-header">Everything Is a Reference</h3>
+      <p>
+<?php echo nl2br(
+"JavaScript was designed to be simple and work with limited computer resources. Whenever we assign one variable to another, JavaScript copies a reference to the variable. To understand what this means, have a look at Listing 2-26.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-26. reference1.js
+var foo = { bas: 123 };
+var bar = foo;
+bar.bas = 456;
+console.log(foo.bas); // 456
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Passing objects around in function calls is extremely lightweight no matter what the size of the object, since we only copy the reference to the object and not every single property of the object. To make true copies of data (that break the reference link), you can just create a new object literal as shown in Listing 2-27.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-27. reference2.js
+var foo = { bas: 123 };
+var bar = { bas: foo.bas }; // copy
+
+bar.bas = 456;              // change copy
+console.log(foo.bas);       // 123, original is unchanged
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"We can use quite a few third-party libraries to copy properties for arbitrary JavaScript objects. (It is a simple function we can write ourselves if we wanted.) Such libraries are covered in Chapter 4.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Default Values</h3>
+      <p>
+<?php echo nl2br(
+"The default value of any variable in JavaScript is undefined. You can see it being logged out in Listing 2-28, where you create a variable but do not assign anything to it.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-28. default1.js
+var foo;
+console.log(foo); // undefined
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Similarly, a nonexistent property on a variable returns undefined (Listing 2-29).
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-29. default2.js
+var foo = { bar: 123 };
+console.log(foo.bar); // 123
+console.log(foo.bas); // undefined
+      </code>
+      </pre>
+
+      <h3 class="section-header">Exact Equality</h3>
+      <p>
+<?php echo nl2br(
+"One thing to be careful about in JavaScript is the difference between == and ===. As JavaScript tries to be resilient against programming errors, == tries to do type coercion between two variables. For example, it converts a string to a number so that you can compare it with a number, as shown in Listing 2-30.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-30. equal1.js
+console.log(5 == '5');  // true
+console.log(5 === '5'); // false
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"However, the choices it makes are not always ideal. For example, in Listing 2-31, the first statement is false because ’’ and ‘0’ are both strings and are clearly not equal. However, in the second case, both ‘0’ and the empty string (’’) are falsy (in other words, they behave like false) and are therefore equal with respect to ==. Both statements are false when you use ===.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-31. equal2.js
+console.log('' == '0');  // false
+console.log('' == 0);    // true
+
+console.log('' === '0'); // false
+console.log('' === 0);   // false
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"The tip here is to not compare different types to each another. Comparing different types of variables (such as a string with a number) is something you would not be able to do in a statically typed language anyway (a statically typed language is one where you must specify the type of a variable). If you keep this in mind, you can safely use ==. However, it is recommended that you always use === whenever possible.
+
+Similar to == vs. ===, there are the inequality operators != and !==, which work in the same way. In other words, != does type coercion, whereas !== is strict.
+"); ?>
+      </p>
+
+      <h3 class="section-header">null</h3>
+      <p>
+<?php echo nl2br(
+"null is a special JavaScript object used to denote an empty object. This is different from undefined, which is used by JavaScript for nonexistent and noninitialized values. You should not set anything to undefined because, by convention, undefined is the default value you should leave to the runtime. A good time to use null is when you want to explicitly say that something is not there, such as as a function argument. You will see its usage in the section on error handling in this chapter.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Truthy and Falsy</h3>
+      <p>
+<?php echo nl2br(
+"One important concept in JavaScript is truthy values and falsy values. Truthy values are those that behave like true in boolean operations and falsy values are those that behave like false in boolean operations. It is generally easier to use if / else / ! for null / undefined instead of doing an explicit check. An example of the falsy nature of these values is shown in Listing 2-32.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-32. truthyandfalsy.js
+console.log(null == undefined);  // true
+console.log(null === undefined); // false
+
+// Are these all falsy?
+if (!false) {
+    console.log('falsy');
+}
+if (!null) {
+    console.log('falsy');
+}
+if (!undefined) {
+    console.log('falsy');
+}
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Other important falsy values are 0 and the empty string (''). All object literals and arrays are truthy in JavaScript.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Revealing Module Pattern</h3>
+      <p>
+<?php echo nl2br(
+"unctions that return objects are a great way to create similar objects. An object here means data and functionality bundled into a nice package, which is the most basic form of Object Oriented Programming (OOP) that one can do. At the heart of the revealing module pattern is JavaScript’s support for closures and ability to return arbitrary (function + data) object literals. Listing 2-33 is a simple example that shows how to create an object using this pattern.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-33. revealingModules.js
+function printableMessage() {
+    var message = 'hello';
+    function setMessage(newMessage) {
+        if (!newMessage) throw new Error('cannot set empty message');
+        message = newMessage;
+    }
+    function getMessage() {
+        return message;
+    }
+
+    function printMessage() {
+        console.log(message);
+    }
+
+    return {
+        setMessage: setMessage,
+        getMessage: getMessage,
+        printMessage: printMessage
+    };
+}
+
+// Pattern in use
+var awesome1 = printableMessage();
+awesome1.printMessage(); // hello
+
+var awesome2 = printableMessage();
+awesome2.setMessage('hi');
+awesome2.printMessage(); // hi
+
+// Since we get a new object everytime we call the module function
+// awesome1 is unaffected by awesome2
+awesome1.printMessage(); // hello
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"The great thing about this example is that it is a simple pattern to understand because it only utilizes closures, first-class functions, and object literals—concepts that are already familiar to you and that we covered extensively in the beginning of this chapter.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Understanding this</h3>
+      <p>
+<?php echo nl2br(
+"The JavaScript keyword this has a very special place in the language. It is something that is passed to the function depending upon how you call it (somewhat like a function argument). The simplest way to think of it is that it refers to the calling context. The calling context is the prefix used to call a function. Listing 2-34. demonstrates its basic usage.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-34. this1.js
+var foo = {
+    bar: 123,
+    bas: function () {
+        console.log('inside this.bar is:', this.bar);
+    }
+}
+
+console.log('foo.bar is: ', foo.bar); // foo.bar is: 123
+foo.bas();                            // inside this.bar is: 123
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Inside the function bas, this refers to foo since bas was called on foo and is therefore the calling context. So, what is the calling context if I call a function without any prefix? The default calling context is the Node.js global variable, as shown in Listing 2-35.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-35. this2.js
+function foo() {
+    console.log('is this called from globals? : ', this === global); // true
+}
+foo();
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Note that if we were running it in the browser, the global variable would be window instead of global.
+
+Of course, since JavaScript has great support for first-class functions, we can attach a function to any object and change the calling context, as shown in Listing 2-36.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-36. this3.js
+var foo = {
+    bar: 123
+};
+
+function bas() {
+    if (this === global)
+        console.log('called from global');
+    if (this === foo)
+        console.log('called from foo');
+}
+
+// global context
+bas();     // called from global
+
+// from foo
+foo.bas = bas;
+foo.bas(); // called from foo
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"There is one last thing you need to know about this in JavaScript. If you call a function with the new JavaScript operator, it creates a new JavaScript object and this within the function refers to this newly created object. Again, Listing 2-37 provides another simple example.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-37. this4.js
+function foo() {
+    this.foo = 123;
+    console.log('Is this global?: ', this == global);
+}
+
+// without the new operator
+foo(); // Is this global?: true
+console.log(global.foo); // 123
+
+// with the new operator
+var newFoo = new foo();  // Is this global?: false
+console.log(newFoo.foo); // 123
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"You can see that we modified this.foo inside the function and newFoo.foo was set to that value.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Understanding Prototype</h3>
+      <p>
+<?php echo nl2br(
+"It is a common misunderstanding that JavaScript isn’t object-oriented. It is indeed true that until recently JavaScript has not had the class keyword. But functions in JavaScript are more powerful than they are in many other languages and can be used to mimic traditional object oriented principles. The secret sauce is the new keyword (which you have already seen) and a property called the prototype. Every object in JavaScript has an internal link to another object called the prototype. Before we look at creating traditional classes in JavaScript, let’s have a deeper look at prototype.
+
+When you read a property on an object (for example, foo.bar reads the property bar from foo), JavaScript checks that this property exists on foo. If not, JavaScript checks if the property exists on foo.__proto__ and so on till __proto__ itself is not present. If a value is found at any level, it is returned. Otherwise, JavaScript returns undefined (see Listing 2-38).
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-38. prototype1.js
+var foo = {};
+foo.__proto__.bar= 123;
+console.log(foo.bar); // 123
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Although this works, the __ prefix in JavaScript is conventionally used for properties that should not be used by user code (in other words, private/internal implementation details). Therefore, you should not use __proto__ directly. The good news is that when you create an object using the new operator on a function, the __proto__ is set to the function’s .prototype member, whichcan be verified with a simple bit of code, as shown in Listing 2-39.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-39. prototype2.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create a object using `new`
+// foo.prototype will be copied to bas.__proto__
+var bas = new foo();
+
+// Verify the prototype has been copied
+console.log(bas.__proto__ === foo.prototype); // true
+console.log(bas.bar);                         // 123
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"The reason why this is great is because prototypes are shared between all the objects (let’s call these instances) created from the same function. This fact is shown in Listing 2-40.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-40. prototype3.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create two instances
+var bas = new foo();
+var qux = new foo();
+
+// Show original value
+console.log(bas.bar); // 123
+console.log(qux.bar); // 123
+
+// Modify prototype
+foo.prototype.bar = 456;
+
+// All instances changed
+console.log(bas.bar); // 456
+console.log(qux.bar); // 456
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Imagine you need 1,000 instances created. All the functionality you put on prototype is shared. And therefore lesson one:prototype saves memory.
+
+Prototype is great for reading data off an object. However, if you set a property on the object, you break the link with the prototype because (as explained earlier) the prototype is only accessed if the property does not exist on the object. This disconnection from a prototype property caused by setting a property on an object is shown in Listing 2-41.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-41. prototype4.js
+// Lets create a test function and set a member on its prototype
+function foo() { };
+foo.prototype.bar = 123;
+
+// Lets create two instances
+var bas = new foo();
+var qux = new foo();
+
+// Overwrite the prototype value for bas
+bas.bar = 456;
+console.log(bas.bar); // 456 i.e. prototype not accessed
+
+// Other objects remain unaffected
+console.log(qux.bar); // 123
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"You can see that when we modified bas.bar, bas.__proto__.bar was no longer accessed. Hence, lesson two: .prototype is not good for properties you plan on writing to.
+
+The question becomes what we should use for properties we need to write to. Recall from our discussion on this that this refers to the object that is created when the function is called with the new operator. So this is a perfect candidate for read/write properties and you should use it for all properties. But functions are generally not altered after creation. So functions are great candidates to go on .prototype. This way, functionality (functions/methods) is shared between all instances, and properties belong on individual objects. Now we can understand a pattern to write a class in JavaScript, which is shown in Listing 2-42.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-42. class.js
+// Class definition
+function someClass() {
+    // Properties go here
+    this.someProperty = 'some initial value';
+}
+// Member functions go here:
+someClass.prototype.someMemberFunction = function () {
+    /* Do something using this */
+    this.someProperty = 'modified value';
+}
+
+// Creation
+var instance = new someClass();
+
+// Usage
+console.log(instance.someProperty); // some initial value
+instance.someMemberFunction();
+console.log(instance.someProperty); // modified value
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Within the member function, we can get access to the current instance using this even though the same function body is shared between all instances. The reason should be obvious from our earlier discussion on this and the calling context. It is because we call a function on some instance, in other words, instance.someMemberFunction(). That is why inside the function this will refer to the instance used.
+
+The main difference here vs. the revealing module pattern is that functions are shared between all the instances and don’t take up memory for each new instance. This is because functions are only on .prototype and not on this. Most classes inside core Node.js are written using this pattern.
+"); ?>
+      </p>
+
+      <h3 class="section-header">Error Handling</h3>
+      <p>
+<?php echo nl2br(
+"Error handling is an important part of any application. Errors can happen because of your code or even in code not in your controls, for example, database failure.
+
+JavaScript has a great exception handling mechanism that you might already be familiar with from other programming languages. To throw an exception, you simply use the throw JavaScript keyword. To catch an exception, you can use the catch keyword. For code you want to run regardless of whether an exception was caught or not, you can use the finally keyword. Listing 2-43. is a simple example that demonstrates this.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-43. error1.js
+try {
+    console.log('About to throw an error');
+    throw new Error('Error thrown');
+}
+catch (e) {
+    console.log('I will only execute if an error is thrown');
+    console.log('Error caught: ', e.message);
+}
+finally {
+    console.log('I will execute irrespective of an error thrown');
+}
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"The catch section executes only if an error is thrown. The finally section executes despite any errors thrown within the try section. This method of exception handling is great for synchronous JavaScript. However, it will not work under an async workflow. Listing 2-44. demonstrates this shortcoming.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-44. error2.js
+try {
+    setTimeout(function () {
+        console.log('About to throw an error');
+        throw new Error('Error thrown');
+    }, 1000);
+}
+catch (e) {
+    console.log('I will never execute!');
+}
+
+console.log('I am outside the try block');
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"The reason why it does not work is because at the point in time when the callback for setTimeout executes, we would already be outside the try/catch block. The setTimeout is going to call the function provided at a later point, and you can see that happen in this code sample since “I am outside the try block” is executed. The default behavior for uncaught exceptions in Node.js is to exit the process, and this is why our application crashes.
+
+The correct way of doing this is to handle the error inside the callback, as shown shown in Listing 2-45.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-45. error3.js
+setTimeout(function () {
+    try {
+        console.log('About to throw an error');
+        throw new Error('Error thrown');
+    }
+    catch (e) {
+        console.log('Error caught!');
+    }
+}, 1000);
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"This method works fine from inside an async function. But now we have an issue of finding a way to tell the code outside about the error. Let’s look at a concrete example. Consider a simple getConnection function that takes a callback we need to call after a successful connection, as shown in Listing 2-46.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-46. error4.js
+function getConnection(callback) {
+    var connection;
+    try {
+        // Lets assume that the connection failed
+        throw new Error('connection failed');
+
+        // Notify callback that connection succeeded?
+    }
+    catch (error) {
+        // Notify callback about error?
+    }
+}
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"We need to notify the callback about success and failure. This is why Node.js has a convention of calling callbacks with the first argument of error if there is an error. If there is no error, we call back with the error set to null. As a result, a getConnection function designed for the Node.js ecosystem would be something like what is shown in Listing 2-47.
+"); ?>
+      </p>
+    
+      <pre><code class="javascript">
+// Listing 2-47. error5.js
+function getConnection(callback) {
+    var connection;
+    try {
+        // Lets assume that the connection failed
+        throw new Error('connection failed');
+
+        // Notify callback that connection succeeded?
+        callback(null, connection);
+    }
+    catch (error) {
+        // Notify callback about error?
+        callback(error, null);
+    }
+}
+
+// Usage
+getConnection(function (error, connection) {
+    if (error) {
+        console.log('Error:', error.message);
+    }
+    else {
+        console.log('Connection succeeded:', connection);
+    }
+});
+      </code>
+      </pre>
+    
+      <p>
+<?php echo nl2br(
+"Having the error as the first argument ensures consistency in error checking. This is the convention followed by all Node.js functions that have an error condition. A good example of this is the file system API, which we cover in Chapter 3. Also note that developers tend to use the falsy nature of null to check for errors.
+"); ?>
+      </p>
+	  
+	  <br>
+	  <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../dist/js/test.min.js"></script>
+    <script src="../../dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>
