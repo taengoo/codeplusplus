@@ -55,24 +55,24 @@
     <div class="container">
 
       <div class="page-heading">
-      	<h1 class="page-title">SECTION 2</h1>
+      	<h1 class="page-title">SECTION 3</h1>
       </div>
     
-    <h3 class="section-header">Understanding Node.js</h3>
+    <h3 class="section-header">Core Node.js</h3>
     <p>
-<a href="../../project-03/section-02/01.html">2.1 Variables</a><br>
-<a href="../../project-03/section-02/02.html">2.2 Functions</a><br>
-<a href="../../project-03/section-02/03.html">2.3 Closures</a><br>
-<a href="../../project-03/section-02/04.html">2.4 Understanding Node.js Performance</a><br>
-<a href="../../project-03/section-02/05.html">2.5 More Node.js Internals</a><br>
-<a href="../../project-03/section-02/06.html">2.6 More JavaScript</a><br>
-<a href="../../project-03/section-02/07.html">2.7 Summary</a><br>
+<a href="../../project-03/section-03/01.html">3.1 Node.js File-Based Module System</a><br>
+<a href="../../project-03/section-03/02.html">3.2 Important Globals</a><br>
+<a href="../../project-03/section-03/03.html">3.3 Core Modules</a><br>
+<a href="../../project-03/section-03/04.html">3.4 Reusing Node.js Code in the Browser</a><br>
+<a href="../../project-03/section-03/05.html">3.5 Summary</a><br>
     </p>
 		
 	  <p>
-To understand how Node.js works, first you need to understand a few key features of JavaScript that make it well suited for server-side development. JavaScript is a simple language, but it is also extremely flexible. This flexibility is the reason why it has stood the test of time. First-class functions and closures make it an ideal language for web applications.<br>
+Node.js ships with a number of built-in modules that provide a core set of features we can build upon. In this chapter, we will show the important parts of Node.js that every serious developer should be familiar with. The great thing about Node.js is that it is quite possible for the average developer to be completely aware of exactly how everything functions.<br>
 <br>
-JavaScript has a bad reputation for being unreliable. However, this notion couldn’t be further from the truth. Actually, JavaScript’s bad reputation comes from the DOM’s unreliability. The DOM (docment object model) is the API (application programming interface) that browser vendors provide to interact with the browser using JavaScript. The DOM has idiosyncrasies between browser vendors. However, JavaScript the language is well-defined and can be used reliably across browsers and Node.js. In this chapter, we discuss a few fundamentals of JavaScript followed by how Node.js used JavaScript to provide a highly performant platform for web applications. Other people complain about how JavaScript handles programming errors (it tries to make invalid code work). However, in such cases, the developers are really to blame, as they need to be careful when working with a highly dynamic language.<br>
+To successfully deliver large applications and work in sizable teams, we need a way of encapsulating complexity. JavaScript was originally designed to be read from top to bottom in a simplistic manner by a web browser, and files were loaded using &lt;script&gt; tags. As larger and larger applications have been written in JavaScript, two module systems (AMD and CommonJS) have been developed. They make code more manageable and reusable. Two patterns exist because the browser and server offer different challenges in terms of module-loading latency (network requests vs. file system). In this chapter, we will discuss these patterns and show how to reuse Node.js code in the browser.<br>
+<br>
+One note about the code samples in this and every other chapter that uses multiple files is that the main entry point of the example is often called app.js following a Node.js community convention. So you should be able to run a sample as node app.js.<br>
 	  </p>
 	  
     </div><!-- /.container -->
