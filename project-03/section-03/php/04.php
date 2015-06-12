@@ -73,7 +73,7 @@
       </p>
     
       <pre><code class="javascript">
-Listing 3-45. Code Snippet to Show Loading Two Modules Using CommonJS
+// Listing 3-45. Code Snippet to Show Loading Two Modules Using CommonJS
 var foo = require('./foo');
 var bar = require('./bar');
 // continue code here
@@ -89,9 +89,9 @@ However, if the same module system is used in the browser, each require statemen
       </p>
     
       <pre><code class="javascript">
-Listing 3-46. code snippet to show loading two modules using AMD
+// Listing 3-46. code snippet to show loading two modules using AMD
 define(['./foo', './bar'], function(foo, bar){
-        // continue code here
+    // continue code here
 });
       </code>
       </pre>
@@ -161,7 +161,7 @@ To reiterate, the browser has different latency requirements from a server start
       </p>
     
       <pre><code class="javascript">
-Listing 3-48. amd/base/client/app.js
+// Listing 3-48. amd/base/client/app.js
 console.log('Hello requirejs!');
       </code>
       </pre>
@@ -188,7 +188,7 @@ To export something from a module, you can simply return it from the define call
       </p>
     
       <pre><code class="javascript">
-Listing 3-49. amd/play/client/foo.js
+// Listing 3-49. amd/play/client/foo.js
 define([], function () {
     var foo = function () {
         console.log('foo was called');
@@ -205,9 +205,9 @@ define([], function () {
       </p>
     
       <pre><code class="javascript">
-Listing 3-50. amd/play/client/app.js
+// Listing 3-50. amd/play/client/app.js
 define(['./foo', './bar'], function (foo, bar) {
-        // use foo and bar here
+    // use foo and bar here
 });
       </code>
       </pre>
@@ -219,7 +219,7 @@ define(['./foo', './bar'], function (foo, bar) {
       </p>
     
       <pre><code class="javascript">
-Listing 3-51. amd/play/client/bar.js
+// Listing 3-51. amd/play/client/bar.js
 define(['exports'], function (exports) {
     var bar = exports.log = function () {
         console.log('bar.log was called');
@@ -235,7 +235,7 @@ define(['exports'], function (exports) {
       </p>
     
       <pre><code class="javascript">
-Listing 3-52. amd/play/client/app.js
+// Listing 3-52. amd/play/client/app.js
 define(['./foo', './bar'], function (foo, bar) {
     foo();
     bar.log();
@@ -268,13 +268,13 @@ You can see that foo.js and bar.js were downloaded in parallel as soon as app.js
       </p>
     
       <pre><code class="javascript">
-Listing 3-53. Snippet to show how you can conditionally load a module in AMD
+// Listing 3-53. Snippet to show how you can conditionally load a module in AMD
 define(['./foo', './bar'], function(foo, bar){
-        if(iReallyNeedThisModule){
-                require(['./bas'], function(bas){
-                        // continue code here.
-                });
-        }
+    if(iReallyNeedThisModule){
+        require(['./bas'], function(bas){
+            // continue code here.
+        });
+    }
 });
       </code>
       </pre>
@@ -313,17 +313,17 @@ First off, we will create three files that follow the Node.js / CommonJS module 
       </p>
     
       <pre><code class="javascript">
-Listing 3-55. amd/browserify/node/foo.js
+// Listing 3-55. amd/browserify/node/foo.js
 module.exports = function () {
     console.log('foo was called');
 }
 
-Listing 3-56. amd/browserify/node/bar.js
+// Listing 3-56. amd/browserify/node/bar.js
 exports.log = function () {
     console.log('bar.log was called');
 }
 
-Listing 3-57. amd/browserify/node/app.js
+// Listing 3-57. amd/browserify/node/app.js
 var foo = require('./foo');
 var bar = require('./bar');
 
@@ -344,7 +344,7 @@ This takes app.js and all its dependencies (foo.js and bar.js) and converts them
       </p>
     
       <pre><code class="javascript">
-Listing 3-59. amd/browserify/client/app.js
+// Listing 3-59. amd/browserify/client/app.js
 define(['../node/amdmodule'], function (amdmodule) {
 
 });

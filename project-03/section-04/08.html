@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="../../dist/css/highlight-default.css" rel="stylesheet">
+    <link href="../../dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 4.8</h1>
+      </div>
+
+      <h3 class="section-header">POPULAR NODE JS PACKAGES</h3>
+      <p>
+Now that we know all the important details of consuming Node.js packages, let’s look at a few of the most popular ones.<br />
+      </p>
+
+      <h3 class="section-header">Underscore</h3>
+      <p>Underscore (npm install underscore) is by far the most popular JavaScript library available on NPM. It is the library with the largest number of dependents (other packages that depend on this package).<br />
+<br />
+It is called underscore because it creates a global variable ‘_’ when used in the browser. In node, you are free to name the variable returned from require('underscore') whatever you want, but it is conventional to still do var _ = require('underscore').<br />
+<br />
+Underscore provides a lot of functional programming support to JavaScript that you find in other languages such as Ruby and Python. Every good JavaScript developer should be familiar with it. Note that bits of functionality of underscore is being added to core JavaScript with new versions, but to work across all browsers and Node.js it is recommended that you use underscore if only for consistency and lesser cognitive load (so you have less stuff to keep in your head at a time).<br />
+<br />
+Let’s say we have an array of numbers and we only need the ones that are greater than 100. Doing this in plain old JavaScript would look tedious, as shown in Listing 4-32.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-32. popular/underscore/filter/raw.js
+var foo = [1, 10, 50, 200, 900, 90, 40];
+
+var rawResults = []
+for (i = 0; i < foo.length; i++) {
+    if (foo[i] > 100) {
+        rawResults.push(foo[i]);
+    }
+}
+console.log(rawResults);
+      </code>
+      </pre>
+
+      <p>The same code in underscore is much simpler and neater. The function _.filter takes an array, passes each element of the array to a function (second argument), and returns an array containing all the elements where the second function returns true. This is demonstrated in Listing 4-33.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-33. popular/underscore/filter/us.js
+var foo = [1, 10, 50, 200, 900, 90, 40];
+
+var _ = require('underscore');
+var results = _.filter(foo, function (item) { return item > 100 });
+console.log(results);
+      </code>
+      </pre>
+
+      <p>Before we continue, we will give a quick introduction to functional programming. Functions in functional programming have well-defined mathematical behavior. If the input is the same, the output will always be the same. This is the mathematical definition of a function and not the programming construct that we as developers commonly associate with the term function. As a simple example of a mathematical function, think of addition. If foo and bar are the same, then foo+bar will always be the same. Therefore + is what we call a pure function. Similarly, a JavaScript function function add(a,b){return a+b} is a pure function as the output only depends on the inputs.<br />
+<br />
+Pure functions are easy to understand, follow along, and therefore maintain. The thing that prevents code from being purely functional is state. State is maintained by mutating (modifying) objects. This is what we are doing in the raw example. We are mutating the rawResults array in a loop. This is commonly called an imperative way of coding or thinking. However, in the underscore example, the filter function takes two arguments and, if the arguments are the same, the result will always be the same. Therefore, it is functional.<br />
+<br />
+Again, the key motivation for this is maintainability. If you know what filter does, it is immediately obvious from that one line what is being filtered. There is a lot more that can be said about functional programming, but this should have teased you enough to discover more.<br />
+<br />
+Now let’s look at other functions in underscore. The _.map function takes an array, calls a function for each element of the array storing the return value as a result, and returns a new array consisting of all the results. It basically maps an input array, through a function, into an output array. For example, let’s say we want to multiply each element of an array with 2. We can do that quite simply using _.map as shown in Listing 4-34.<br />
+</p>
+      <pre><code class="javascript">
+// Listing 4-34. popular/underscore/map/app.js
+// using underscore
+var foo = [1, 2, 3, 4];
+
+var _ = require('underscore');
+var results = _.map(foo, function (item) { return item * 2 });
+console.log(results);
+      </code>
+      </pre>
+
+      <p>Another scenario common in collections is to get all elements except those that match a condition. For this, we can use _.reject. An example to get only the odd elements in an array is shown in Listing 4-35.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-35. popular/underscore/reject/app.js
+var _ = require('underscore');
+var odds = _.reject([1, 2, 3, 4, 5, 6], function(num){ return num % 2 == 0; });
+console.log(odds); // [1, 3, 5]
+      </code>
+      </pre>
+
+      <p>To get the maximum element of an array use _.max, to get the minimum use _.min:<br />
+</p>
+
+      <pre><code class="javascript">
+var _ = require('underscore');
+var numbers = [10, 5, 100, 2, 1000];
+console.log(_.min(numbers)); // 2
+console.log(_.max(numbers)); // 1000
+      </code>
+      </pre>
+
+      <p>That’s sufficient to get you started. To learn more about the functions provided by underscore, have a look at the online documentation at http://underscorejs.org/.<br />
+</p>
+
+      <h3 class="section-header">Handling Command Line Arguments</h3>
+      <p>We looked at process.argv in Chapter 3. This is a simple array of all the command line argument passed into the node process. We promised in the previous chapter that once we learn about NPM, we will look at a library that offers better command line handling. Well, here it is. It’s called optimist. Because of the sheer number of command line tools published on NPM, this is one of the most downloaded packages out there.<br />
+<br />
+As always, install using npm install optimist. It simply exports an object that contains the parsed command line arguments as the argv property. So instead of using process.argv, you just use require('optimist').argv.<br />
+<br />
+Enough talk. Let’s code. Create a JavaScript file that simply logs out the processed arguments, as shown in Listing 4-36.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-36. popular/optimist/app1.js
+var argv = require('optimist').argv;
+console.log(argv);
+      </code>
+      </pre>
+
+      <p>If you run this right now, you will notice output similar to that in Listing 4-37.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-37. Simple Run of popular/optimist/app1.js
+$ node app.js
+{ _: [],
+  '$0': 'node /path/to/your/app.js' }
+      </code>
+      </pre>
+
+      <p>Optimist preserves the first two members of the process.argv array (which are the node executable and the path to your JavaScript file) as '$0'. Since we’d like to keep our output clean for this demo, let’s just delete this property so we can log everything else to the console. To do this, modify your code to be what is shown in Listing 4-38.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-38. popular/optimist/app.js
+var argv = require('optimist').argv;
+delete argv['$0'];
+console.log(argv);
+      </code>
+      </pre>
+
+      <p>Now, if you run the app you get the following output:<br />
+<br />
+$ node app.js<br />
+{ _: [] }<br />
+<br />
+Ahh, much better. The property argv._ is an array of all the command line arguments that are passed in which are not flags. Flags are arguments that begin with a minus '-' sign, for example, '-f'. Let’s run app.js and pass in a bunch of arguments, as shown in Listing 4-39.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-39. Showing Output When Using Non-Flag Arguments
+$ node app.js foo bar bas
+{ _: [ 'foo', 'bar', 'bas'] }
+      </code>
+      </pre>
+
+      <p>As a use case, consider a simple scenario of implementing a delete file utility. If wanted, to support taking in multiple files for deletion, all of these files would go in the 'argv._' property.<br />
+<br />
+If we wanted to support flags such as forced delete (-f), optimist supports this completely. Any simple flags you pass in become a property of argv with the value set to true. For example, if you want to check if the flag f was set, just check if argv.f is truthy. Optimist even supports some pretty fancy shortcuts, as shown in Listing 4-40.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-40. Showing output when using flags
+$ node app.js -r -f -s
+{ _: [], r: true, f: true, s: true }
+
+$ node app.js -rfs
+{ _: [], r: true, f: true, s: true }
+      </code>
+      </pre>
+
+      <p>Optimist also supports flags that take values if, say, you want to accept a timeout flag (-t 100). Optimist supports them similarly to the way it supports simple flags. The property matching the flag name is set on argv (argv.t in this case) and the value is set to the value the user passed (in this case 100), as shown in Listing 4-41.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-41. Showing Output When Using Flags with Values
+$ node app.js -t 100
+{ _: [], t: 100 }
+
+$ node app.js -t "la la la la"
+{ _: [], t: 'la la la la' }
+      </code>
+      </pre>
+
+      <p>As you can see, you get a lot of processing done for you right out of the box without any configuration. For most purposes where you want to support simple flags, this will be sufficient.<br />
+<br />
+Optimist has lots of other options as well that allow for advanced configuration such as forcing the user to pass in an argument, forcing an argument to be a boolean, listing all the command line arguments supported in the configuration, and providing default argument values. No matter what your command line processing use case, NPM/optimist has you covered and you should definitely explore it further.<br />
+</p>
+
+      <h3 class="section-header">Handling Date/Time Using Moment</h3>
+      <p>The built-in JavaScript Date type is fairly limited. It is good enough for simple cases, for example, you can create a date representing the current time with a simple constructor call. There is also a constructor that lets you create dates at the resolution that you want to work on such as year, month, day, hours, minutes, seconds, and milliseconds. One thing to be aware of with JavaScript dates is that the month is 0 index based. So January is 0, February is 1, and so on. You can see a few dates created in Listing 4-42.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-42. popular/moment/rawdate.js
+// Now
+var now = new Date();
+console.log('now is:', now);
+
+// get sections of time
+var milliseconds = now.getMilliseconds();
+var seconds = now.getSeconds();
+var hours = now.getHours();
+var minutes = now.getMinutes();
+var date = now.getDate();
+var month = now.getMonth();
+var year = now.getFullYear();
+
+// detailed constructor for a date
+var dateCopy = new Date(year, month, date, hours, minutes, seconds, milliseconds);
+console.log('copy is:', dateCopy);
+
+// Other dates
+// year, month, date
+console.log('1 jan 2014:', new Date(2014, 0, 1));
+// year, month, date, hour
+console.log('1 jan 2014 9am', new Date(2014, 0, 1, 9));
+      </code>
+      </pre>
+
+      <p>There are lots of features in addition to the basic feature set of JavaScript Date that are provided by moment (npm install moment). At its core, moment provides a function that can be used to wrap a JavaScript date object into a moment object. There are lots of ways to create a moment object. The simplest is to simply pass in a date object. Conversely, to convert a moment object to a JavaScript date, simply call the toDate member function. This is demonstrated in Listing 4-43.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-43. popular/moment/wrapping.js
+var moment = require('moment');
+
+// From date to moment
+var wrapped = moment(new Date());
+console.log(wrapped);
+
+// From moment to date
+var date = wrapped.toDate();
+console.log(date);
+      </code>
+      </pre>
+
+      <p>Moment provides reliable string parsing. The result of a parsed string is a wrapped moment object. This is shown in Listing 4-44. To unwrap, we simply call toDate as we already saw in Listing 4-43.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-44. popular/moment/parsing.js
+var moment = require('moment');
+
+// From string to date
+console.log(moment("12-25-1995", "MM-DD-YYYY").toDate());
+console.log(moment("2010-10-20 4:30", "YYYY-MM-DD HH:mm").toDate());
+      </code>
+      </pre>
+
+      <p>Another great feature provided by moment is date formatting support (that is, date to a string conversion). A few examples are shown in Listing 4-45.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-45. popular/moment/formatting.js
+var moment = require('moment');
+
+var date = new Date(2010, 1, 14, 15, 25, 50);
+var wrapped = moment(date);
+
+// "Sunday, February 14th 2010, 3:25:50 pm"
+console.log(wrapped.format('"dddd, MMMM Do YYYY, h:mm:ss a"'));
+
+// "Sun, 3PM"
+console.log(wrapped.format("ddd, hA"));
+      </code>
+      </pre>
+
+      <p>There is a lot of power provided by moment.js in terms of formatting. You can even get friendly values like “in 6 hours,” “Tomorrow at 9:40 am,” and “Last Sunday at 9:40 pm,” as shown in Listing 4-46.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-46. popular/moment/timeago.js
+var moment = require('moment');
+
+var a = moment([2007, 0, 15]); // 15 Jan 2007
+var b = moment([2007, 0, 16]); // 16 Jan 2007
+var c = moment([2007, 1, 15]); // 15 Feb 2007
+var d = moment([2008, 0, 15]); // 15 Jan 2008
+
+console.log(a.from(b)); // "a day ago"
+console.log(a.from(c)); // "a month ago"
+console.log(a.from(d)); // "a year ago"
+
+console.log(b.from(a)); // "in a day"
+console.log(c.from(a)); // "in a month"
+console.log(d.from(a)); // "in a year"
+      </code>
+      </pre>
+
+      <p>Lots of additional goodies are provided by moment and hopefully you now see the motivation to explore more and have an understanding of how to use them.<br />
+</p>
+
+      <h4 class="section-header">Serializing Dates</h4>
+      <p>Since we are discussing dates, let’s discuss a good practice to follow when serializing dates for saving to a JSON file or sending JSON over the wire. When we discussed JSON earlier, you might have noticed that Date is not supported as a valid JSON value type. There are various ways for passing dates over the wire, but it is simplest to send them as strings.<br />
+<br />
+What a particular date string means in terms of its actual date value differs based on the local culture (for example, month before date or date before month), so it is best to follow a global standard. The ISO8601 standard specifically relates to how a particular date should be represented as a string.<br />
+<br />
+Various formats are supported by ISO8601, but the one natively supported by JavaScript is something that looks like 2014-05-08T17:35:16Z, where the date and time is expressed in the same string relative to UTC. Since it is always relative to UTC, it is user time zone independent. This is a good thing since the user might not be in the same time zone as the server and UTC is a global time reference.<br />
+<br />
+If we call the toJSON method on a JavaScript date, ISO8601 formatted string is what we get back. Similarly, passing in this string to a JavaScript date constructor gives us a new JavaScript date object, as shown in Listing 4-47.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-47. popular/moment/json.js
+var date = new Date(Date.UTC(2007, 0, 1));
+
+console.log('Original', date);
+
+// To JSON
+var jsonString = date.toJSON();
+console.log(jsonString); // 2007-01-01T00:00:00.000Z
+
+// From JSON
+console.log('Round Tripped',new Date(jsonString));
+      </code>
+      </pre>
+
+      <p>This .toJSON support is carried over in moment as well. If you call .toJSON on a wrapped moment object, you get the same result as you get on the raw date object. This allows you to safely serialize objects that have Date or moment objects as values.<br />
+<br />
+One final thing worth mentioning is that if any object (not just Dates) has a toJSON method, it will be called by JSON.stringify when it tries to serialize it to JSON. Hence, we can use it to customize the serialization for any JavaScript object if we want to. This is shown in a simple example in Listing 4-48.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-48. popular/moment/tojson.js
+var foo = {};
+var bar = { 'foo': foo };
+
+// Uncustomized serialization
+console.log(JSON.stringify(bar)); // {"foo":{}}
+
+// Customize serialization
+foo.toJSON = function () { return "custom" };
+console.log(JSON.stringify(bar)); // {"foo":"custom"}
+      </code>
+      </pre>
+
+      <h3 class="section-header">Customizing Console Colors</h3>
+      <p>When working on large Node.js projects, it is not uncommon to end up with quite a few pieces of information getting logged on the console for monitoring purposes. Over time, this simple output begins to look boring and is another place where you will need to manage complexity. Syntax highlighting helps you manage code complexity. The colors package (npm install colors) brings a similar benefit to your console output, making it easier to follow what is going on. It is also one of the most used NPM packages (nearly 50,000 downloads a day).<br />
+<br />
+The API provided by colors is extremely simple. It adds functions to the native JavaScript string so that you can do things such as "some string".red and, if you print this string it, will be colored red on the console. A small sample of the various options used and the output is shown in Listing 4-49.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-49. popular/colors/1basic.js
+// Loading this module modifies String for the entire process
+require('colors');
+
+console.log('hello'.green);                       // outputs green text
+console.log('world!'.red);                        // outputs red text
+console.log('Feeling yellow'.yellow);             // outputs yellow text
+console.log('But you look blue'.blue);            // outputs yellow text
+console.log('This should cheer you up!'.rainbow); // rainbow
+      </code>
+      </pre>
+
+      <p>The usage is really simple. Besides the obvious advantage of bringing this power to your fingertips, the reason why we showed you this package was to make a segue into further customizing JavaScript internals. Let’s see how this package is actually implemented. Along the way, we will revisit prototypes (a topic we discussed in Chapter 2) and learn about JavaScript property getters and setters.<br />
+</p>
+
+      <h4 class="section-header">How Does It Work?</h4>
+      <p>There are two sides of this API:<br />
+-    how to print colors on the console<br />
+-    how to modify JavaScript strings and add functions to them<br />
+<br />
+Printing a string in a particular color is something that is supported by most consoles (windows and UNIX) using ANSI escape codes. If you print one of these codes, the behavior of the console changes. Create a simple JavaScript file that prints the JavaScript string surrounded by a few of these codes as shown in Listing 4-50. If you run it, you will see a red string logged to the console.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-50. popular/colors/2raw.js
+function getRed(str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + str + clearCode;
+}
+
+console.log(getRed('Hello World!'));
+      </code>
+      </pre>
+
+      <p>This is a sufficient understanding of how we can modify the behavior of the console. It is a simple matter of reading the terminal documentation and finding the color codes to match. The more interesting question for us as JavaScript developers is, “How can I add member functions to all strings?”<br />
+<br />
+In Chapter 2, we discussed how, when you create an object with the new operator, the prototype of the function is copied into the __proto__ member of the created instance. And since it is a reference, if you add a property to the original function prototype, all instances of objects created using this function will get the new property.<br />
+<br />
+Fortunately for us, all the native types in JavaScript (dates, strings, arrays, numbers, and so on) are created from functions that match the name of the type. Consequently, if we add a member to the prototype of these functions, we can successfully extend all instances of these types. Listing 4-51 provides a quick example to demonstrate this principle where we add a property foo to all Arrays, Numbers, and Strings.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-51. popular/colors/3prototypeIntro.js
+Array.prototype.foo = 123;
+Number.prototype.foo = 123;
+String.prototype.foo = 123;
+
+var arr = [];
+var str = '';
+var num = 1;
+
+console.log(arr.foo); // 123
+console.log(str.foo); // 123
+console.log(num.foo); // 123
+      </code>
+      </pre>
+
+      <p>To add a function to strings, add to String.prototyp, as demonstrated in Listing 4-52.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-52. popular/colors/4addFunction.js
+String.prototype.red = function (str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + this + clearCode;
+}
+
+console.log('Hello World!'.red());
+      </code>
+      </pre>
+
+      <p>Notice, however, that in this example we are calling a function on the string, that is, 'Hello World!'.red() whereas when we used colors, we simply did 'Hello World!'.red. That is, with colors, we didn’t need to “call()” the member. This is because colors defined red as a property getter and not a function.<br />
+<br />
+A property getter/setter is simply a way for you to plug into the JavaScript’s getter/read value (for example, foo.bar) and setter/set value (for example, foo.bar = 123) semantics. One simple way to add a getter/setter is using the __defineGetter__/__defineSetter__ member functions available on all JavaScript objects. Listing 4-53 gives a simple example to demonstrate this usage.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-53. popular/colors/5propertyIntro.js
+var foo = {};
+
+foo.__defineGetter__('bar', function () {
+    console.log('get bar was called!');
+});
+
+foo.__defineSetter__('bar', function (val) {
+    console.log('set bar was called with value:',val);
+});
+
+// get
+foo.bar;
+// set
+foo.bar = 'something';
+      </code>
+      </pre>
+
+      <p>So, finally to add '.red' property on all strings, we only need to add it to String.prototype as shown in Listing 4-54.<br />
+</p>
+
+      <pre><code class="javascript">
+// Listing 4-54. popular/colors/6addProperty.js
+String.prototype.__defineGetter__('red', function (str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + this + clearCode;
+});
+
+console.log('Hello World!'.red);
+      </code>
+      </pre>
+
+      <p>At the very least, you now have a deeper appreciation of the JavaScript language and can understand its success a bit better. After showing you all this power, we give an obligatory word of caution. As we have said before, global state is bad and unintuitive. So, if you start to add members to these native types (string, number, array, and so on) in an uncontrolled manner (in various different files), it will be difficult for the next person to understand where this functionality is coming from. Reserve this power for modules that are specifically designed with the objective of extending built-in types and be sure to document it! Also be careful not to override any existing or native JavaScript behavior since other libraries might depend on it!<br />
+</p>
+	  
+	  <br>
+	  <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../dist/js/test.min.js"></script>
+    <script src="../../dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>
