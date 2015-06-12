@@ -1,0 +1,969 @@
+
+SECTION 4: Node.js Packages
+
+4.1 Revisiting Node Modules
+	- Scanning for node_modules
+	- Folder-Based Modules
+	- Advantages of node_modules
+	- Module Caching and node_modules
+4.2 JSON
+	- Beginner’s Introduction to JSON
+	- Loading JSON in Node.js
+	- The JSON Global
+4.3 NPM
+	- package.json
+	- Installing an NPM Package
+	- Saving Dependencies
+	- Refresh the node_modules Folder
+	- Listing All Dependencies
+	- Removing a Dependency
+	- package.json Online Dependency Tracking
+4.4 Semantic Versioning
+	- Semantic Versioning in NPM / package.json
+	- Updating Dependencies
+4.5 Global Node.js Packages
+	- Using require with Global Modules
+4.6 Package.json and require
+4.7 Modules Recap
+4.8 Popular Node.js Packages
+	- Underscore
+	- Handling Command Line Arguments
+	- Handling Date/Time Using Moment
+	- Customizing Console Colors
+4.9 Summary
+	- Additional Resources
+
+
+----
+SECTION 4: Node.js Packages
+----
+
+As we saw in Chapter 3, core Node.js does not ship with a massive list of libraries. There is a good reason for this. Having something shipped as a part of core Node.js has the potential to stifle competition and evolution of ideas. As a result, the core Node.js tries to limit what it contains and relies on the open source community to paint the complete picture. Letting the open source community find the best solution to a problem X is better than prescribing a one-hammer-for-everything solution.
+
+The number of JavaScript developers is much larger than for any other programming language. Also, more and more people are writing more and more libraries to do any given task X in the browser, and all of this work is available for you to use in your applications.
+
+To make it easy to consume third-party JavaScript libraries in your applications, Node.js comes with its own package management system called Node Package Manager (NPM). In this chapter, we will discuss how to consume NPM packages in our applications. We will cover a few important ones every Node.js developer should be aware of. We will also use this as a practical opportunity to learn more about how JavaScript works.
+
+
+----
+4.1 Revisiting Node Modules
+----
+In the previous chapter, we learned that there are three kinds of Node.js modules: file-based modules, core modules, and external node_modules. We discussed file-based modules and core modules, and now we will look at node_modules. To understand them better, let’s take a deeper look at the file system scanning order of the Node.js require function.
+- If the module name passed into the require function is prefixed with ‘./’ or ‘../’ or ‘/’, then it is assumed to be a file-based module and the file is loaded, as we saw in the Chapter 3. Some sample calls: require('./bar), require('../bar/bar'), require('/full/path/to/a/node/module/file')
+- Otherwise, we look for core modules with the same name, for example, 'bar' if the call was require('bar'). If no core module matching this name is found, we look for a node_module called 'bar'.
+
+----
+Scanning for node_modules
+----
+Let’s just look at an example first. If a file /home/ryo/project/foo.js has a require call require('bar'), Node.js scans the file system for node_modules in the following order. The first bar.js that is found is returned.
+-    /home/ryo/project/node_modules/bar.js
+-    /home/ryo/node_modules/bar.js
+-    /home/node_modules/bar.js
+-    /node_modules/bar.js
+
+In other words, Node.js looks for 'node_modules/bar.js' in the current folder followed by every parent folder until it reaches the root of the file system tree for the current file or until a bar.js is found. A simple example of this is a module foo.js that loads a module node_modules/bar.js, as shown in Listing 4-1 and Listing 4-2.
+
+Listing 4-1. hello/foo.js
+var bar = require('bar');
+bar(); // hello node_modules!
+
+Listing 4-2. hello/node_modules/bar.js
+module.exports = function () {
+    console.log('hello node_modules!');
+}
+
+As you can see, our module bar.js looks exactly the same as it would if we were simply using file-based modules. And that is intentional. The only difference between file-based modules and node_modules is the way in which the file system is scanned to load the JavaScript file. All other behavior is the same.
+
+----
+Folder-Based Modules
+----
+Before we discuss all the advantages of node_modules mechanism, we need to learn one final code organization trick supported by the Node.js require function. It is not uncommon to have a several files working toward a singular goal. It makes sense to organize these files into a single module that can be loaded with a single require call. We discussed organizing such files into a single folder and having an index.js to represent the folder in Chapter 3.
+
+This is such a common scenario that Node.js has explicit support for this mechanism. That is, if a path to the module resolves to a folder (instead of a file), Node.js will look for an index.js file in that folder and return that as the module file. This is demonstrated in a simple example (chapter4/folderbased/indexbased1) where we export two modules bar1.js and bar2.js using an index.js and load the module bar (and implicitly bar/index.js) in a module foo, as shown in Listing 4-3 (run node folderbased/indexbased1/foo.js).
+
+Listing 4-3. Implicit Loading of index.js from a Folder (Code: folderbased/indexbased1)
+// bar/bar1.js
+module.exports = function () {
+    console.log('bar1 was called');
+}
+
+// bar/bar2.js
+module.exports = function () {
+    console.log('bar2 was called');
+}
+
+// bar/index.js
+exports.bar1 = require('./bar1');
+exports.bar2 = require('./bar2');
+
+// foo.js
+var bar = require('./bar');
+bar.bar1();
+bar.bar2();
+
+As we stated earlier, the only difference between file-based modules and node_modules is the way in which the file system is scanned. So for a call like require('./bar'), the same code for node_modules would be a simple move of the bar folder into node_modules/bar folder and the require call changed from require('./bar') to require('bar').
+
+This example is present in the chapter4/folderbased/indexbased2 folder (run node folderbased/indexbased2/foo.js). Since the call now resolves to node_modules/bar folder, Node.js looks for node_modules/bar/index.js and since it is found, that is what is returned for require('bar'). (See Listing 4-4.)
+
+Listing 4-4. Implicit Loading of index.js from a node_modules/module Folder (Code: folderbased/indexbased2)
+// node_modules/bar/bar1.js
+module.exports = function () {
+    console.log('bar1 was called');
+}
+
+// node_modules/bar/bar2.js
+module.exports = function () {
+    console.log('bar2 was called');
+}
+
+// node_modules/bar/index.js
+exports.bar1 = require('./bar1');
+exports.bar2 = require('./bar2');
+
+// foo.js
+var bar = require('bar'); // look for a node_modules module named bar
+bar.bar1();
+bar.bar2();
+
+The require call semantics look exactly the same for node_modules as they do for core modules (compare require('fs') to require('bar') function call). This is intentional. You get the feeling of expanding the built in Node.js functionality when using node_modules.
+
+Using folder-based code organization when working with node_modules is a common strategy and what you should do whenever possible. In other words, refrain from making top-level JavaScript files in the node_modules folder if all you want is a single file. Then, instead of node_modules/bar.js, use a node_modules/bar/index.js file.
+
+----
+Advantages of node_modules
+----
+We now understand that node_modules are the same as file-based modules with just a different file system scanning mechanism used on loading the module JavaScript file. The obvious question at this point is, “What are the advantages?”
+
+Simplify Long File Relative Paths
+----
+Say you have a module foo/foo.js that provides a number of utilities that you need to use at a variety of different places in your application. In a section bar/bar.js, you would have a require call require('../foo/foo.js'), and in a section bas/nick/scott.js, you would have a require call like require('../../../foo/foo.js'). At this point, you should ask yourself, “Is this foo module self-contained?” If so, it is a great candidate to move into node_modules/foo/index.js in the root of your project folder. This way you can simplify your calls to be just require('foo') throughout your code.
+
+Increasing Reusability
+----
+If you want to share a module foo with another project, you only need to copy node_modules/foo to that project. In fact, if you are working on two similar sub projects, you can move node_modules/foo to a folder that contains both your projects, as shown in Listing 4-5. This makes it easier for you to maintain foo from a single place.
+
+Listing 4-5. Sample Code Organization for Sub Projects Using Shared node_modules
+projectroot
+   |-- node_modules/foo
+   |-- subproject1/project1files
+   |-- subproject2/project2files
+   
+Decreasing Side Effects
+----
+Because of the way the node_modules are scanned, you can limit the availability of a module to a particular section of your codebase. This allows you to safely do partial upgrades, assuming that your original code organization was as shown in Listing 4-6.
+
+Listing 4-6. Demo Project Using a Module foo
+projectroot
+   |-- node_modules/foo/fooV1Files
+   |-- moduleA/moduleAFiles
+   |-- moduleB/moduleBFiles
+   |-- moduleC/moduleCFiles
+
+Now, when you are working on a new module (say moduleD) that needs a new (and backward incompatible) version of module foo, you can simply organize your code as shown in Listing 4-7.
+
+Listing 4-7. Partial Upgrade of Module foo
+projectroot
+   |-- node_modules/foo/fooV1Files
+   |-- moduleA/moduleAFiles
+   |-- moduleB/moduleBFiles
+   |-- moduleC/moduleCFiles
+   |-- moduleD
+          |-- node_modules/foo/fooV2Files
+          |-- moduleDFiles
+
+In this way, moduleA, moduleB, and moduleC continue to function as always and you get to use the new version of foo in moduleD.
+
+Overcoming Module Incompatibility
+----
+Node.js does not suffer from the module dependency/incompatibility hell that is present in a number of traditional systems. In many traditional module systems, a moduleX cannot work with moduleY because they depend on different (and incompatible) versions of moduleZ. In Node.js, each module can have its own node_modules folder and different versions of moduleZ can coexist. Modules do not need to be global in Node.js!
+
+----
+Module Caching and node_modules
+----
+You might recall from our discussion in Chapter 3 that require caches the result of a require call after the first time. The reason is the performance boost you get from not needing to load JavaScript and run it from the file system again and again. We said that require returns the same object each time the path resolves to the same file.
+
+As we have already shown, node_modules are just a different way of scanning for file-based modules. Therefore, they follow the same module caching rule. If you have two folders where moduleA and moduleB require module foo i.e require('foo'), which is present in some parent folder as shown in Listing 4-8, they get the same object (as exported from node_modules/foo/index.js in the given example).
+
+Listing 4-8. Both Modules Get the Same foo Module
+projectroot
+    |-- node_modules/foo/index.js
+    |-- moduleA/a.js
+    |-- moduleB/b.js
+
+However, consider the code organization as shown in Listing 4-9. Here moduleB’s require('foo') call will resolve to moduleB/node_modules/foo/index.js, whereas moduleA’s require call will resolve to node_modules/foo/index.js and therefore they do not get the same object.
+
+Listing 4-9. Module A and B Get Different foo Module
+projectroot
+    |-- node_modules/foo/index.js
+    |-- moduleA/a.js
+    |-- moduleB
+         |-- node_modules/foo/index.js
+         |-- b.js
+
+This is a good thing as we have already seen that it prevents you from going into a dependency problem. But this disconnection is something you should be conscious of.
+
+
+----
+4.2 JSON
+----
+NPM uses JSON files for configuring modules. Before we delve deeper into NPM, let’s take a look at JSON.
+
+----
+Beginner’s Introduction to JSON
+----
+JSON is a standard format used to transfer data over the network. It can be considered a subset of JavaScript object literals for most purposes. It basically restricts what JavaScript object literals are considered valid. JSON objects to make it easier to implement the specification and shield users from edge cases they need to worry about. We will take a practical look at JSON in this section.
+
+One of restrictions enforced by the JSON spec is that you must use quotation marks for JavaScript object keys. This allows you to avoid cases where you cannot have JavaScript keywords as keys for an object literal. For example, the JavaScript in Listing 4-10 was a syntax error in ECMA Script 3 (an older version of JavaScript) because for is a JavaScript keyword.
+
+Listing 4-10. Invalid JS in Old Browsers (Pre ECMAScript 5)
+var foo = { for : 0 }
+
+Instead, a valid representation of the same object compatible with all version of JavaScript would be what is shown in Listing 4-11.
+
+Listing 4-11. Valid JS Even in Old Browsers (Pre ECMAScript 5)
+var foo = { "for" : 0 }
+
+Additionally, the JSON spec limits what you can have as a value for a given key to be a safe subset of JavaScript objects. The values can only be a string, number, boolean (true or false), array, null, or another valid JSON object. A JSON object that demonstrates all of these is shown in Listing 4-12.
+
+Listing 4-12. Sample JSON
+{
+    "firstName": "John",
+    "lastName": "Smith",
+    "isAlive": true,
+    "age": 25,
+    "height_cm": 167.64,
+    "address": {
+        "streetAddress": "21 2nd Street",
+        "city": "New York",
+        "state": "NY",
+    },
+    "phoneNumbers": [
+        { "type": "home", "number": "212 555-1234" },
+        { "type": "fax",  "number": "646 555-4567" }
+    ],
+    "additionalInfo": null
+}
+
+The firstName value is a string, age is a number, isAlive is a boolean, phoneNumbers is an array of valid JSON objects, additionalInfo is null, and address is another valid JSON object. The reason for this restriction of types is to simplify the protocol. If you need to pass arbitrary JavaScript objects as JSON, you can try and serialize/deserialize them to a string (common for dates) or a number (common for enums).
+
+Another restriction is that the last property must not have an extra comma. Again this is because of old browsers (for example, IE8) being restrictive about what is and isn’t a valid JavaScript literal. For example, in Listing 4-13, although the first example is a valid JavaScript object literal in Node.js and modern browsers, it is not valid JSON.
+
+Listing 4-13. Trailing Command after Last Value
+// Invalid JSON
+{
+    "foo": "123",
+    "bar": "123",
+}
+// Valid JSON
+{
+    "foo": "123",
+    "bar": "123"
+}
+
+To reiterate, JSON is pretty much just JavaScript object literals with a few reasonable restrictions that only serve to increase the ease of implementing the specification and that have been instrumental in its popularity as a data transfer protocol.
+
+----
+Loading JSON in Node.js
+----
+Since JSON is such an important part of the web, Node.js has fully embraced it as a data format, even locally. You can load a JSON object from the local file system the same way you load a JavaScript module. Every single time within the module loading sequence, if a file.js is not found, Node.js looks for a file.json. If it is found, it returns a JavaScript object representing the JSON object. Let’s work on a simple example. Create a file config.json with a single key foo and a string value (shown in Listing 4-14).
+
+Listing 4-14. json/filebased/config.js
+{
+    "foo": "this is the value for foo"
+}
+
+Now, let’s load this file as a JavaScript object in app.js and log out the value for the key foo (shown in Listing 4-15).
+
+Listing 4-15. json/filebased/app.js
+var config = require('./config');
+console.log(config.foo); // this is the value for foo
+
+This simplicity of loading JSON explains why so many libraries in the Node.js community rely on using a JSON file as a configuration mechanism.
+
+----
+The JSON Global
+----
+Data transfer over the wire takes place in the form of bytes. To write a JavaScript object from memory onto the wire or to save to a file, you need a way to convert this object into a JSON string. There is a global object in JavaScript called JSON that provides utility functions for converting a string representation of JSON to JavaScript objects and converting JavaScript objects into a JSON string ready to be sent over the wire or written to the file or anything else you want to do with it. This JSON global is available in Node.js as well all modern browsers.
+
+To convert a JavaScript object to a JSON string, you simply call JSON.stringify passing in the JavaScript object as an argument. This function returns the JSON string representation of the JavaScript object. To convert a JSON string into a JavaScript object, you can use the JSON.parse function, which simply parses the JSON string and returns a JavaScript object matching the information contained in the JSON string, as shown in Listing 4-16 and Listing 4-17.
+
+Listing 4-16. json/convert/app.js
+var foo = {
+    a: 1,
+    b: 'a string',
+    c: true
+};
+
+// convert a JavaScript object to a string
+var json = JSON.stringify(foo);
+console.log(json);
+console.log(typeof json); // string
+
+// convert a JSON string to a JavaScript object
+var backToJs = JSON.parse(json);
+console.log(backToJs);
+console.log(backToJs.a); // 1
+
+Listing 4-17. Output from app.js
+$ node app.js
+{"a":1,"b":"a string","c":true}
+string
+{ a: 1, b: 'a string', c: true }
+1
+
+This rudimentary understanding of JSON and how it relates to JavaScript object literals will go a long way in making you a successful Node.js developer
+
+
+----
+4.3 NPM
+----
+Now we know how to create reusable modules using node_modules. The next piece of the puzzle answers the question, “How do I get what the community has shared with me?”
+
+The answer: Node Package Manger, lovingly called NPM. If you installed Node.js as specified in Chapter 1, it not only added “node” to the command line, but it also added “npm”, which is simply a command line tool that integrates with the online NPM registry (www.npmjs.org/). A screenshot of NPM is shown in Figure 4-1.
+
+Figure 4-1. At its simplest, NPM is a way to share node_modules with the community
+
+----
+package.json
+----
+An integral part of the NPM ecosystem is a simple JSON file called package.json. This file has special meaning for NPM. It is vital to have it set up properly when you want to share your module with the world, but it is just as useful if you are consuming modules from other people. To create a package.json file in the current folder, just run the code in Listing 4-18 on the command line.
+
+Listing 4-18. Initializing a package.json File
+$ npm init
+
+This will ask you a few questions such as the name of the module and its version. I tend to just press enter until the end. This creates a boilerplate package.json in the current folder with the name set to the current folder, version set to 0.0.0, and a few other reasonable defaults as shown in Listing 4-19.
+
+Listing 4-19. A Default package.json
+{
+  "name": "foo",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
+
+----
+Installing an NPM Package
+----
+Let’s install a module, for example, underscore (www.npmjs.org/package/underscore) to a folder. To download the latest version of underscore, you simply run the command shown in Listing 4-20.
+
+Listing 4-20. Installing an NPM Module
+$ npm install underscore
+
+This will download the latest version of underscore from npmjs.org and put it into node_modules/underscore in the current folder. TO load this module, all you need to do now is make a require('underscore') call. This is demonstrated in Listing 4-21, where we load the underscore library and simply output the minimum element of an array to the console.
+
+Listing 4-21. Using an Installed Module
+// npm/install/app.js
+var _ = require('underscore');
+console.log(_.min([3, 1, 2])); // 1
+
+We will take a look at underscore and other popular NPM packages later in this chapter; however, at this point the focus is on the NPM command line tool.
+
+----
+Saving Dependencies
+----
+Whenever you run npm install, you have an optional command line flag available (--save) that tells NPM to write the information about what you installed into package.json, as shown in Listing 4-22.
+
+Listing 4-22. Installing an NPM Module and Updating package.json
+$ npm install underscore --save
+
+If you run install with –-save, not only will it download underscore into node_modules, it will also update dependencies inside package.json to point to the installed version of underscore, as shown in Listing 4-23.
+
+Listing 4-23. Updated Section of package.json
+"dependencies": {
+    "underscore": "^1.6.0"
+  }
+
+There are quite a few advantages of keeping track of dependencies this way. For one, it is easy to know which published version of a particular library you are using (depend upon), simply by looking at your package.json. The same holds true when you are browsing the source code of other people’s modules. Just open up their package.json to see what they are relying on.
+
+Refresh the node_modules Folder
+
+To refresh the node_modules folder from your package.json, you can run the following command:
+
+$ npm install
+
+This simply looks at your package.json file and downloads a fresh copy of the dependencies specified in your package.json.
+
+Another advantage of using a package.json is that you can now potentially exclude node_modules from your source control mechanism since you can always get a copy from npmjs.org with a simple npm install command.
+
+----
+Listing All Dependencies
+----
+To see which packages you have installed, you can run npm ls command, as shown in Listing 4-24.
+
+Listing 4-24. Listing Dependencies
+
+----
+Removing a Dependency
+----
+Remove a dependency using npm rm. For example, npm rm underscore --save deletes the underscore folder from node_modules locally and modifies the dependencies section of your package.json. This command has an intuitive synonym npm uninstall since the command was npm install for installation.
+
+----
+package.json Online Dependency Tracking
+----
+One more advantage of using package.json for dependency tracking is that if at some later point you decide to share your module with the rest of the world (that is, share at npmjs.org), you do not need to ship the dependencies as your users can download them online.
+
+If your package.json is set up properly and they install your module, NPM will automatically download and install the dependencies of your module. To see a simple example, let’s install a package (request) that has dependencies, as shown in Listing 4-25.
+
+Listing 4-25. Installing a Module with Lots of Dependencies
+
+You can see that NPM not only installed request but also brought down a number of other packages that request depends upon. Each of these packages can, in turn, depend on other packages (for example, form-data depends upon async and combined-stream), and they get their own local copy of the packages they depend upon (and will be downloaded into their own node_modules folder, for example, node_modules/request/node_modules/form-data/node_modules/async). As discussed earlier, because of the way the require function works in Node.js, you can safely use sub modules that depend on different version of the same module since they each get their own copy when set up using NPM.
+
+
+----
+4.4 Semantic Versioning
+----
+Good Node.js packages/NPM follow semantic versioning, which is an industry standard and should be followed as a good software development practice. Semantics is the study of meaning. Semantic versioning means versioning your software in a way that the version numbers have significant meaning. There is much that can be said about semantic versioning, but the following is a simplified but practical explanation for a Node.js developer:
+
+-    Put simply, Node.js developers follow a three-digit versioning scheme X.Y.Z where all X, Y, and Z are non-negative integers. X is the major version, Y is the minor, and Z is the patch version.
+-    Patch versions must be incremented if backward compatible fixes are introduced.
+-    Minor versions must be incremented if backward compatible new features are introduced.
+-    Major versions must be incremented if backward incompatible fixes/features/changes are introduced.
+
+Keeping these points in mind, you can see that v1.5.0 of a package should be in-place replaceable by v1.6.1 as the new version should be backward compatible (major version 1 is same). This is something that good packages strive for.
+
+However, the reality is that errors are sometimes inevitably introduced with new versions, or the code was used in a manner that the original authors of the package did not predict. In such a case, some breaking change may be introduced unknowingly.
+
+----
+Semantic Versioning in NPM / package.json
+----
+NPM and package.json have great support for semantic versioning. You can tell NPM which version of a package you want. For example, the following code installs the exact version 1.0.3 of underscore:
+
+$ npm install underscore@1.0.3
+
+You can tell NPM that you are okay with all patch versions of 1.0 using a tilde “~”:
+
+$ npm install underscore@"~1.0.0"
+
+Next up, to tell NPM that you are okay with any minor version changes use “^”:
+
+$ npm install underscore@"^1.0.0"
+
+Other version string operators supported include “>=” and “>”, which have intuitive mathematical meanings, such as “>=1.4.2”. Similarly there are “<=” and “<” , for example, “<1.4.2”. There is also a * that can be used at various locations to match any number such as 1.0.* (for example, 1.0.0, 1.0.1, and so on) or 1.* (for example, 1.1.0, 1.3.4, and so on) and simply *, which will get you the latest version every time.
+
+You can use these semantic version strings in package.json as well. For example, the following package.json tells NPM that your package is compatible with any minor upgrade on v1.6.0 of underscore:
+
+"dependencies": {
+   "underscore": "^1.6.0"
+ }
+ 
+----
+Updating Dependencies
+----
+Whenever you use --save flag, the default that NPM uses for updating package.json dependencies section is “^”, preceded by the downloaded version. The reason is that you should always try to use the latest version where the major version number hasn’t changed. This way, you get any new features plus latest bug fixes for free, and there should not be any breaking changes.
+
+As an example, if run the following command, you get a package.json dependencies section:
+
+$ npm install request@1.0.0 -save
+
+Following is the default version string added to package.json:
+
+"dependencies": {
+  "request": "^1.0.0"
+}
+
+However 1.0.0 is not the latest published version of request. To find the latest online version that is compatible with the current semantic version specified in package.json (in this example ^1.0.0), you can run npm outdated, as shown in Listing 4-26.
+
+Listing 4-26. Check Latest Version of Packages
+$ npm outdated
+npm http GET https://registry.npmjs.org/request
+npm http 304 https://registry.npmjs.org/request
+Package  Current  Wanted  Latest  Location
+request    1.0.0   1.9.9  2.34.0  request
+
+You can see that the latest version compatible with ^1.0.0 is ^1.9.9, which is the wanted version based on the semantic string found in our package.json. It also shows you that there is an even more recent version available.
+
+To update these packages to the newest compatible version and save the results into your package.json (to match the version numbers with what is downloaded), you can simply run the following command. Your updated package.json is shown in Listing 4-27.
+
+$ npm update -save
+
+Listing 4-27. Updated package.json
+"dependencies": {
+   "request": "^1.9.9"
+}
+
+Having this basic knowledge of package.json and the commands npm install, npm rm, npm update, and the --save NPM flag along with a respect for semantic versioning is mostly all you need to know about managing NPM packages in your project.
+
+
+----
+4.5 Global Node.js Packages
+----
+It is really simple to make command line utilities in Node.js. One of the most common motivations for learning Node.js nowadays is the fact that a lot of management utilities for front-end projects are written in Node.js. There are projects to test your web front ends, compile various new programming languages like CoffeeScript and TypeScript into JavaScript and Sass, stylus, and less into CSS, minify your JavaScript and CSS and so on. Popular front-end JavaScript projects such as jQuery, AngularJS, Ember.js, and React depend on Node.js scripts to manage their projects.
+
+The objective of global Node.js packages is to provide command line utilities that you can use from (surprise) the command line. All of the NPM commands we have seen take an optional -g flag to indicate that you are working with global modules.
+
+Remember in Chapter 3 we used a utility Browserify to convert Node.js code into browser AMD compatible code. Browserify is a Node.js package we installed globally (npm install -g browserify). This put browserify on the command line, which we used in the previous chapter.
+
+Similarly, you can update global packages (npm update -g package-name), list global packages (npm ls -g), and uninstall packages (npm rm -g package-name). For example, to uninstall Browserify, you would run npm rm -g browserify.
+
+When installing modules globally, NPM does not modify your system configuration. The reason the command line utility suddenly becomes available is because global modules are placed in a location (for example, /usr/local/bin on Mac OSX and the user roaming profile’s NPM folder on Windows) where they become available on the command line.
+
+----
+Using require with Global Modules
+----
+Modules installed globally are not meant to be used with a require function call in your code, although many packages that support the global flag also support being installed locally in your project (the node_modules folder). If installed locally, that is, without the –g flag, you can use them with the require function as we have already seen. A good and simple example of this is the rimraf module (www.npmjs.org/package/rimraf).
+
+If rimraf is installed globally (npm install -g rimraf), it provides a command line utility that you can use cross platform for recursively and forcefully removing a directory (effectively rm -rf in Unix command line lingo). To remove a directory foo after installing rimraf globally, simply run rimraf foo.
+
+To do the same from your Node.js code, install rimraf locally (npm install rimraf), create an app.js as shown in Listing 4-28, and run it (node app.js).
+
+Listing 4-28. global/rimrafdemo/app.js
+var rimraf = require('rimraf');
+rimraf('./foo', function (err) {
+    if (err) console.log('Error occured:', err);
+    else console.log('Directory foo deleted!');
+})
+
+For the sake of completeness, it is worth mentioning that there is a way to load modules from a global location if you set the NODE_PATH environment variable. But this is strongly discouraged when consuming modules and you should use dependencies locally (package.json and node_modules).
+
+
+----
+4.6 Package.json and require
+----
+Most of package.json we have seen has been for NPM. All it was doing was managing our dependencies and putting them in node_modules. From this point on, require works the way we have already shown. It looks for a JavaScript file/folder in node_modules that matches what we asked require to load, for example, foo in require('foo'). We have already shown that if it resolves to a folder, Node.js tries to load index.js from that folder as the result of the module load.
+
+There is one final thing about the require function that you need to know about. You can use package.json to redirect require to load a different file from a folder instead of the default (which would look for an index.js). This is done using the main property in a package.json. The value of this property is the path to the JavaScript file you want to load. Let’s look at an example and create a directory structure, as shown in Listing 4-29.
+
+Listing 4-29. Project Structure for Demo Code chapter4/mainproperty
+|-- app.js
+|-- node_modules
+          |-- foo
+               |-- package.json
+               |-- lib
+                    |-- main.js
+
+main.js is a simple file that logs to the console to indicate it was loaded, as shown in Listing 4-30.
+
+Listing 4-30. mainproperty/node_modules/foo/lib/main.js
+console.log('foo main.js was loaded');
+
+Within the package.json, simply point main to main.js in the lib folder:
+
+{
+    "main" : "./lib/main.js"
+}
+
+This means that if anybody were to require('foo'), Node.js would look at package.json, see the main property, and run './lib/main.js'. So let’s require this module in our app.js. If you run it (node app.js), you will see that indeed main.js was loaded.
+
+require('foo');
+
+One thing worth mentioning is that “main” is the only property that require and hence the node executable cares about. All other properties in package.json are for NPM / npm executable, which is specifically designed for package management.
+
+The advantage of having this “main” property is that it allows library developers complete freedom on how they want to architect their project and keep the structure as clear as they want.
+
+Quite commonly, people will put simple Node.js packages (ones that can go in a file) into a file name that matches the package name packageName.js and then create a package.json to point to the file name. For example, this is what rimraf does—it has a rimraf.js and that is what the main property of package.json points to, as shown in Listing 4-31.
+
+Listing 4-31. package.json from the rimraf npm Module Showing the Main Property
+{
+  "name": "rimraf",
+  "version": "2.2.7",
+  "main": "rimraf.js",
+   ...
+
+
+----
+4.7 Modules Recap
+----
+At this point, it might seem that require has a lot to do. Indeed it does, but in our honest opinion, it is all kept quite simple and here is a recap to prove that you are already a Node.js modules expert! Assume you require('something'). Then the follow is the logic followed by Node.js:
+-    If something is a core module, return it.
+-    If something is a relative path (starts with ‘./’ , ‘../’) return that file OR folder.
+-    If not, look for node_modules/filename or node_modules/foldername each level up until you find a file OR folder that matches something.
+
+When matching a file OR folder:, follow these steps:
+-    If it matched a file name, return it.
+-    If it matched a folder name and it has package.json with main, return that file.
+-    If it matched a folder name and it has an index file, return it.
+
+Of course, the file can be a file.js or file.json since JSON is first class in Node.js! For JSON, we return the parsed JSON and for JavaScript files we simply execute the file and return ‘module.exports’.
+
+That’s all there is to it. Having this knowledge allows you to open up and look at thousands of open source Node.js packages available on npmjs.org and Github.
+
+
+----
+4.8 Popular Node.js Packages
+----
+Now that we know all the important details of consuming Node.js packages, let’s look at a few of the most popular ones.
+
+----
+Underscore
+----
+Underscore (npm install underscore) is by far the most popular JavaScript library available on NPM. It is the library with the largest number of dependents (other packages that depend on this package).
+
+It is called underscore because it creates a global variable ‘_’ when used in the browser. In node, you are free to name the variable returned from require('underscore') whatever you want, but it is conventional to still do var _ = require('underscore').
+
+Underscore provides a lot of functional programming support to JavaScript that you find in other languages such as Ruby and Python. Every good JavaScript developer should be familiar with it. Note that bits of functionality of underscore is being added to core JavaScript with new versions, but to work across all browsers and Node.js it is recommended that you use underscore if only for consistency and lesser cognitive load (so you have less stuff to keep in your head at a time).
+
+Let’s say we have an array of numbers and we only need the ones that are greater than 100. Doing this in plain old JavaScript would look tedious, as shown in Listing 4-32.
+
+Listing 4-32. popular/underscore/filter/raw.js
+var foo = [1, 10, 50, 200, 900, 90, 40];
+
+var rawResults = []
+for (i = 0; i < foo.length; i++) {
+    if (foo[i] > 100) {
+        rawResults.push(foo[i]);
+    }
+}
+console.log(rawResults);
+
+The same code in underscore is much simpler and neater. The function _.filter takes an array, passes each element of the array to a function (second argument), and returns an array containing all the elements where the second function returns true. This is demonstrated in Listing 4-33.
+
+Listing 4-33. popular/underscore/filter/us.js
+var foo = [1, 10, 50, 200, 900, 90, 40];
+
+var _ = require('underscore');
+var results = _.filter(foo, function (item) { return item > 100 });
+console.log(results);
+
+Before we continue, we will give a quick introduction to functional programming. Functions in functional programming have well-defined mathematical behavior. If the input is the same, the output will always be the same. This is the mathematical definition of a function and not the programming construct that we as developers commonly associate with the term function. As a simple example of a mathematical function, think of addition. If foo and bar are the same, then foo+bar will always be the same. Therefore + is what we call a pure function. Similarly, a JavaScript function function add(a,b){return a+b} is a pure function as the output only depends on the inputs.
+
+Pure functions are easy to understand, follow along, and therefore maintain. The thing that prevents code from being purely functional is state. State is maintained by mutating (modifying) objects. This is what we are doing in the raw example. We are mutating the rawResults array in a loop. This is commonly called an imperative way of coding or thinking. However, in the underscore example, the filter function takes two arguments and, if the arguments are the same, the result will always be the same. Therefore, it is functional.
+
+Again, the key motivation for this is maintainability. If you know what filter does, it is immediately obvious from that one line what is being filtered. There is a lot more that can be said about functional programming, but this should have teased you enough to discover more.
+
+Now let’s look at other functions in underscore. The _.map function takes an array, calls a function for each element of the array storing the return value as a result, and returns a new array consisting of all the results. It basically maps an input array, through a function, into an output array. For example, let’s say we want to multiply each element of an array with 2. We can do that quite simply using _.map as shown in Listing 4-34.
+
+Listing 4-34. popular/underscore/map/app.js
+// using underscore
+var foo = [1, 2, 3, 4];
+
+var _ = require('underscore');
+var results = _.map(foo, function (item) { return item * 2 });
+console.log(results);
+
+Another scenario common in collections is to get all elements except those that match a condition. For this, we can use _.reject. An example to get only the odd elements in an array is shown in Listing 4-35.
+
+Listing 4-35. popular/underscore/reject/app.js
+var _ = require('underscore');
+var odds = _.reject([1, 2, 3, 4, 5, 6], function(num){ return num % 2 == 0; });
+console.log(odds); // [1, 3, 5]
+
+To get the maximum element of an array use _.max, to get the minimum use _.min:
+
+var _ = require('underscore');
+var numbers = [10, 5, 100, 2, 1000];
+console.log(_.min(numbers)); // 2
+console.log(_.max(numbers)); // 1000
+
+That’s sufficient to get you started. To learn more about the functions provided by underscore, have a look at the online documentation at http://underscorejs.org/.
+
+----
+Handling Command Line Arguments
+----
+We looked at process.argv in Chapter 3. This is a simple array of all the command line argument passed into the node process. We promised in the previous chapter that once we learn about NPM, we will look at a library that offers better command line handling. Well, here it is. It’s called optimist. Because of the sheer number of command line tools published on NPM, this is one of the most downloaded packages out there.
+
+As always, install using npm install optimist. It simply exports an object that contains the parsed command line arguments as the argv property. So instead of using process.argv, you just use require('optimist').argv.
+
+Enough talk. Let’s code. Create a JavaScript file that simply logs out the processed arguments, as shown in Listing 4-36.
+
+Listing 4-36. popular/optimist/app1.js
+var argv = require('optimist').argv;
+console.log(argv);
+
+If you run this right now, you will notice output similar to that in Listing 4-37.
+
+Listing 4-37. Simple Run of popular/optimist/app1.js
+$ node app.js
+{ _: [],
+  '$0': 'node /path/to/your/app.js' }
+  
+Optimist preserves the first two members of the process.argv array (which are the node executable and the path to your JavaScript file) as '$0'. Since we’d like to keep our output clean for this demo, let’s just delete this property so we can log everything else to the console. To do this, modify your code to be what is shown in Listing 4-38.
+
+Listing 4-38. popular/optimist/app.js
+var argv = require('optimist').argv;
+delete argv['$0'];
+console.log(argv);
+
+Now, if you run the app you get the following output:
+
+$ node app.js
+{ _: [] }
+
+Ahh, much better. The property argv._ is an array of all the command line arguments that are passed in which are not flags. Flags are arguments that begin with a minus '-' sign, for example, '-f'. Let’s run app.js and pass in a bunch of arguments, as shown in Listing 4-39.
+
+Listing 4-39. Showing Output When Using Non-Flag Arguments
+$ node app.js foo bar bas
+{ _: [ 'foo', 'bar', 'bas'] }
+
+As a use case, consider a simple scenario of implementing a delete file utility. If wanted, to support taking in multiple files for deletion, all of these files would go in the 'argv._' property.
+
+If we wanted to support flags such as forced delete (-f), optimist supports this completely. Any simple flags you pass in become a property of argv with the value set to true. For example, if you want to check if the flag f was set, just check if argv.f is truthy. Optimist even supports some pretty fancy shortcuts, as shown in Listing 4-40.
+
+Listing 4-40. Showing output when using flags
+$ node app.js -r -f -s
+{ _: [], r: true, f: true, s: true }
+
+$ node app.js -rfs
+{ _: [], r: true, f: true, s: true }
+
+Optimist also supports flags that take values if, say, you want to accept a timeout flag (-t 100). Optimist supports them similarly to the way it supports simple flags. The property matching the flag name is set on argv (argv.t in this case) and the value is set to the value the user passed (in this case 100), as shown in Listing 4-41.
+
+Listing 4-41. Showing Output When Using Flags with Values
+$ node app.js -t 100
+{ _: [], t: 100 }
+
+$ node app.js -t "la la la la"
+{ _: [], t: 'la la la la' }
+
+As you can see, you get a lot of processing done for you right out of the box without any configuration. For most purposes where you want to support simple flags, this will be sufficient.
+
+Optimist has lots of other options as well that allow for advanced configuration such as forcing the user to pass in an argument, forcing an argument to be a boolean, listing all the command line arguments supported in the configuration, and providing default argument values. No matter what your command line processing use case, NPM/optimist has you covered and you should definitely explore it further.
+
+----
+Handling Date/Time Using Moment
+----
+The built-in JavaScript Date type is fairly limited. It is good enough for simple cases, for example, you can create a date representing the current time with a simple constructor call. There is also a constructor that lets you create dates at the resolution that you want to work on such as year, month, day, hours, minutes, seconds, and milliseconds. One thing to be aware of with JavaScript dates is that the month is 0 index based. So January is 0, February is 1, and so on. You can see a few dates created in Listing 4-42.
+
+Listing 4-42. popular/moment/rawdate.js
+// Now
+var now = new Date();
+console.log('now is:', now);
+
+// get sections of time
+var milliseconds = now.getMilliseconds();
+var seconds = now.getSeconds();
+var hours = now.getHours();
+var minutes = now.getMinutes();
+var date = now.getDate();
+var month = now.getMonth();
+var year = now.getFullYear();
+
+// detailed constructor for a date
+var dateCopy = new Date(year, month, date, hours, minutes, seconds, milliseconds);
+console.log('copy is:', dateCopy);
+
+// Other dates
+// year, month, date
+console.log('1 jan 2014:', new Date(2014, 0, 1));
+// year, month, date, hour
+console.log('1 jan 2014 9am', new Date(2014, 0, 1, 9));
+
+There are lots of features in addition to the basic feature set of JavaScript Date that are provided by moment (npm install moment). At its core, moment provides a function that can be used to wrap a JavaScript date object into a moment object. There are lots of ways to create a moment object. The simplest is to simply pass in a date object. Conversely, to convert a moment object to a JavaScript date, simply call the toDate member function. This is demonstrated in Listing 4-43.
+
+Listing 4-43. popular/moment/wrapping.js
+var moment = require('moment');
+
+// From date to moment
+var wrapped = moment(new Date());
+console.log(wrapped);
+
+// From moment to date
+var date = wrapped.toDate();
+console.log(date);
+
+Moment provides reliable string parsing. The result of a parsed string is a wrapped moment object. This is shown in Listing 4-44. To unwrap, we simply call toDate as we already saw in Listing 4-43.
+
+Listing 4-44. popular/moment/parsing.js
+var moment = require('moment');
+
+// From string to date
+console.log(moment("12-25-1995", "MM-DD-YYYY").toDate());
+console.log(moment("2010-10-20 4:30", "YYYY-MM-DD HH:mm").toDate());
+
+Another great feature provided by moment is date formatting support (that is, date to a string conversion). A few examples are shown in Listing 4-45.
+
+Listing 4-45. popular/moment/formatting.js
+var moment = require('moment');
+
+var date = new Date(2010, 1, 14, 15, 25, 50);
+var wrapped = moment(date);
+
+// "Sunday, February 14th 2010, 3:25:50 pm"
+console.log(wrapped.format('"dddd, MMMM Do YYYY, h:mm:ss a"'));
+
+// "Sun, 3PM"
+console.log(wrapped.format("ddd, hA"));
+
+There is a lot of power provided by moment.js in terms of formatting. You can even get friendly values like “in 6 hours,” “Tomorrow at 9:40 am,” and “Last Sunday at 9:40 pm,” as shown in Listing 4-46.
+
+Listing 4-46. popular/moment/timeago.js
+var moment = require('moment');
+
+var a = moment([2007, 0, 15]); // 15 Jan 2007
+var b = moment([2007, 0, 16]); // 16 Jan 2007
+var c = moment([2007, 1, 15]); // 15 Feb 2007
+var d = moment([2008, 0, 15]); // 15 Jan 2008
+
+console.log(a.from(b)); // "a day ago"
+console.log(a.from(c)); // "a month ago"
+console.log(a.from(d)); // "a year ago"
+
+console.log(b.from(a)); // "in a day"
+console.log(c.from(a)); // "in a month"
+console.log(d.from(a)); // "in a year"
+
+Lots of additional goodies are provided by moment and hopefully you now see the motivation to explore more and have an understanding of how to use them.
+
+Serializing Dates
+----
+Since we are discussing dates, let’s discuss a good practice to follow when serializing dates for saving to a JSON file or sending JSON over the wire. When we discussed JSON earlier, you might have noticed that Date is not supported as a valid JSON value type. There are various ways for passing dates over the wire, but it is simplest to send them as strings.
+
+What a particular date string means in terms of its actual date value differs based on the local culture (for example, month before date or date before month), so it is best to follow a global standard. The ISO8601 standard specifically relates to how a particular date should be represented as a string.
+
+Various formats are supported by ISO8601, but the one natively supported by JavaScript is something that looks like 2014-05-08T17:35:16Z, where the date and time is expressed in the same string relative to UTC. Since it is always relative to UTC, it is user time zone independent. This is a good thing since the user might not be in the same time zone as the server and UTC is a global time reference.
+
+If we call the toJSON method on a JavaScript date, ISO8601 formatted string is what we get back. Similarly, passing in this string to a JavaScript date constructor gives us a new JavaScript date object, as shown in Listing 4-47.
+
+Listing 4-47. popular/moment/json.js
+var date = new Date(Date.UTC(2007, 0, 1));
+
+console.log('Original', date);
+
+// To JSON
+var jsonString = date.toJSON();
+console.log(jsonString); // 2007-01-01T00:00:00.000Z
+
+// From JSON
+console.log('Round Tripped',new Date(jsonString));
+
+This .toJSON support is carried over in moment as well. If you call .toJSON on a wrapped moment object, you get the same result as you get on the raw date object. This allows you to safely serialize objects that have Date or moment objects as values.
+
+One final thing worth mentioning is that if any object (not just Dates) has a toJSON method, it will be called by JSON.stringify when it tries to serialize it to JSON. Hence, we can use it to customize the serialization for any JavaScript object if we want to. This is shown in a simple example in Listing 4-48.
+
+Listing 4-48. popular/moment/tojson.js
+var foo = {};
+var bar = { 'foo': foo };
+
+// Uncustomized serialization
+console.log(JSON.stringify(bar)); // {"foo":{}}
+
+// Customize serialization
+foo.toJSON = function () { return "custom" };
+console.log(JSON.stringify(bar)); // {"foo":"custom"}
+
+----
+Customizing Console Colors
+----
+When working on large Node.js projects, it is not uncommon to end up with quite a few pieces of information getting logged on the console for monitoring purposes. Over time, this simple output begins to look boring and is another place where you will need to manage complexity. Syntax highlighting helps you manage code complexity. The colors package (npm install colors) brings a similar benefit to your console output, making it easier to follow what is going on. It is also one of the most used NPM packages (nearly 50,000 downloads a day).
+
+The API provided by colors is extremely simple. It adds functions to the native JavaScript string so that you can do things such as "some string".red and, if you print this string it, will be colored red on the console. A small sample of the various options used and the output is shown in Listing 4-49.
+
+Listing 4-49. popular/colors/1basic.js
+// Loading this module modifies String for the entire process
+require('colors');
+
+console.log('hello'.green);                       // outputs green text
+console.log('world!'.red);                        // outputs red text
+console.log('Feeling yellow'.yellow);             // outputs yellow text
+console.log('But you look blue'.blue);            // outputs yellow text
+console.log('This should cheer you up!'.rainbow); // rainbow
+
+The usage is really simple. Besides the obvious advantage of bringing this power to your fingertips, the reason why we showed you this package was to make a segue into further customizing JavaScript internals. Let’s see how this package is actually implemented. Along the way, we will revisit prototypes (a topic we discussed in Chapter 2) and learn about JavaScript property getters and setters.
+
+How Does It Work?
+----
+There are two sides of this API:
+-    how to print colors on the console
+-    how to modify JavaScript strings and add functions to them
+
+Printing a string in a particular color is something that is supported by most consoles (windows and UNIX) using ANSI escape codes. If you print one of these codes, the behavior of the console changes. Create a simple JavaScript file that prints the JavaScript string surrounded by a few of these codes as shown in Listing 4-50. If you run it, you will see a red string logged to the console.
+
+Listing 4-50. popular/colors/2raw.js
+function getRed(str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + str + clearCode;
+}
+
+console.log(getRed('Hello World!'));
+
+This is a sufficient understanding of how we can modify the behavior of the console. It is a simple matter of reading the terminal documentation and finding the color codes to match. The more interesting question for us as JavaScript developers is, “How can I add member functions to all strings?”
+
+In Chapter 2, we discussed how, when you create an object with the new operator, the prototype of the function is copied into the __proto__ member of the created instance. And since it is a reference, if you add a property to the original function prototype, all instances of objects created using this function will get the new property.
+
+Fortunately for us, all the native types in JavaScript (dates, strings, arrays, numbers, and so on) are created from functions that match the name of the type. Consequently, if we add a member to the prototype of these functions, we can successfully extend all instances of these types. Listing 4-51 provides a quick example to demonstrate this principle where we add a property foo to all Arrays, Numbers, and Strings.
+
+Listing 4-51. popular/colors/3prototypeIntro.js
+Array.prototype.foo = 123;
+Number.prototype.foo = 123;
+String.prototype.foo = 123;
+
+var arr = [];
+var str = '';
+var num = 1;
+
+console.log(arr.foo); // 123
+console.log(str.foo); // 123
+console.log(num.foo); // 123
+
+To add a function to strings, add to String.prototyp, as demonstrated in Listing 4-52.
+
+Listing 4-52. popular/colors/4addFunction.js
+String.prototype.red = function (str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + this + clearCode;
+}
+
+console.log('Hello World!'.red());
+
+Notice, however, that in this example we are calling a function on the string, that is, 'Hello World!'.red() whereas when we used colors, we simply did 'Hello World!'.red. That is, with colors, we didn’t need to “call()” the member. This is because colors defined red as a property getter and not a function.
+
+A property getter/setter is simply a way for you to plug into the JavaScript’s getter/read value (for example, foo.bar) and setter/set value (for example, foo.bar = 123) semantics. One simple way to add a getter/setter is using the __defineGetter__/__defineSetter__ member functions available on all JavaScript objects. Listing 4-53 gives a simple example to demonstrate this usage.
+
+Listing 4-53. popular/colors/5propertyIntro.js
+var foo = {};
+
+foo.__defineGetter__('bar', function () {
+    console.log('get bar was called!');
+});
+
+foo.__defineSetter__('bar', function (val) {
+    console.log('set bar was called with value:',val);
+});
+
+// get
+foo.bar;
+// set
+foo.bar = 'something';
+
+So, finally to add '.red' property on all strings, we only need to add it to String.prototype as shown in Listing 4-54.
+
+Listing 4-54. popular/colors/6addProperty.js
+String.prototype.__defineGetter__('red', function (str) {
+    // Changes the console foreground to red
+    var redCode = '\x1b[31m';
+
+    // Resets the console foreground
+    var clearCode = '\x1b[39m';
+
+    return redCode + this + clearCode;
+});
+
+console.log('Hello World!'.red);
+
+At the very least, you now have a deeper appreciation of the JavaScript language and can understand its success a bit better. After showing you all this power, we give an obligatory word of caution. As we have said before, global state is bad and unintuitive. So, if you start to add members to these native types (string, number, array, and so on) in an uncontrolled manner (in various different files), it will be difficult for the next person to understand where this functionality is coming from. Reserve this power for modules that are specifically designed with the objective of extending built-in types and be sure to document it! Also be careful not to override any existing or native JavaScript behavior since other libraries might depend on it!
+
+
+----
+4.9 Summary
+----
+In this chapter, we discussed the remaining intricacies of the Node.js module system. Along the way, we presented advantages for why the module system needs to work the way it does. The greatest advantage we feel is not having a dependency hell problem that plagues so many other environments, where module incompatibilities prevent you from using two modules that depend on different versions of a third module.
+
+We showed how NPM works. It is simply a way to manage node_modules based modules shared by the Node.js community. We took a tour of the important command line options offered by NPM to manage the community packages you use.
+
+You also learned about JSON and semantic versioning. Both pieces of information are vital information for all developers (not just Node.js developers).
+
+Finally, we showed a number of important Node.js packages and the lessons that you can learn from them. These should help make you a world-class Node.js and JavaScript developer, and you should not be afraid to pop open the node_modules folder and see what makes a library you like tick.
+
+----
+Additional Resources
+----
+NPM online registry: http://npmjs.org/
+
+Semantic versioning the official guide: http://semver.org/
+
+Semantic versioning parser in NPM: https://github.com/isaacs/node-semver
+
