@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="../../dist/css/highlight-default.css" rel="stylesheet">
+    <link href="../../dist/css/highlight-theme.css" rel="stylesheet">
+	
+	<style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 5.2</h1>
+      </div>
+
+      <h3 class="section-header">NODE JS EVENTS</h3>
+      <p><?php echo nl2br(
+"We already have a way to execute some code based on some occurrence (event) using callbacks. A more general concept for handling occurrences of significance is events. An event is like a broadcast, while a callback is like a handshake. A component that raises events knows nothing about its clients, while a component that uses callbacks knows a great deal. This makes events ideal for scenarios where the significance of the occurrence is determined by the client. Maybe the client wants to know, maybe it doesn’t. Registering multiple clients is also simpler with this even as we will see in this section.
+
+Node.js comes with built-in support for events baked into the core events module. As always, use require('events') to load the module. The events module has one simple class \"EventEmitter\", which we present next.
+"); ?></p>
+    
+      <h3 class="section-header">EventEmitter class</h3>
+      <p><?php echo nl2br(
+"EventEmitter is a class designed to make it easy to emit events (no surprise there) and subscribe to raised events. Listing 5-15 provides a small code sample where we subscribe to an event and then raise it.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-15. events/1basic.js
+var EventEmitter = require('events').EventEmitter;
+
+var emitter = new EventEmitter();
+
+// Subscribe
+emitter.on('foo', function (arg1, arg2) {
+    console.log('Foo raised, Args:', arg1, arg2);
+});
+
+// Emit
+emitter.emit('foo', { a: 123 }, { b: 456 });
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"As shown in the example, you can create a new instance with a simple `new EventEmitter` call. To subscribe to events, you use the `on` function passing in the event name (always a string) followed by an event handling function (also called a listener). Finally, we raise an event using the emit function passing in the event name followed by any number of arguments we want passed into the listeners (in Listing 5-15 we used two arguments for demonstration).
+"); ?></p>
+
+      <h4 class="section-header">Multiple Subscribers</h4>
+      <p><?php echo nl2br(
+"As we mentioned previously, having built-in support for multiple subscribers is one of the advantages of using events. Listing 5-16 is a quick sample where we have multiple subscribers for an event.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-16. events/2multiple.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+emitter.on('foo', function () {
+    console.log('subscriber 1');
+});
+
+emitter.on('foo', function () {
+    console.log('subscriber 2');
+});
+
+// Emit
+emitter.emit('foo');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Another thing to note in this sample is the fact that the listeners are called in the order that they registered for the event. This is a nice consequence of the single-threaded nature of Node.js, which makes it easier for you to reason about your code. Additionally, any arguments passed in for the event are shared between the various subscribers, as demonstrated in Listing 5-17.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-17. events/3shared.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+emitter.on('foo', function (ev) {
+    console.log('subscriber 1:', ev);
+    ev.handled = true;
+});
+
+emitter.on('foo', function (ev) {
+    if (ev.handled) {
+        console.log('event already handled');
+    }
+});
+
+// Emit
+emitter.emit('foo', { handled: false });
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"In this sample, the first listener modified the passed event argument and the second listener got the modified object. You can potentially use this fact for getting you out of a tricky situation, but I highly caution against it. The reason for showing this sharing of the event arguments is to warn you about the dangers of modifying the event object directly in a listener.
+"); ?></p>
+
+      <h4 class="section-header">Unsubscribing</h4>
+      <p><?php echo nl2br(
+"The next question to ask is how do we unsubscribe from an event. EventEmitter has a removeListener function that takes an event name followed by a function object to remove from the listening queue. One thing to note is that you must have a reference to the function you want removed from the listening queue and, therefore, should not use an anonymous (inline) function. This is because two functions in JavaScript are not equal if their bodies are the same, as shown below in Listing 5-18, since these are two different and distinct function objects.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-18. Sample to Demonstrate Function Inequality
+$ node -e "console.log(function(){} == function(){})"
+false
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Listing 5-19 shows how you can unsubscribe a listener.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-19. events/4unsubscribe.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+var fooHandler = function () {
+    console.log('handler called');
+
+    // Unsubscribe
+    emitter.removeListener('foo',fooHandler);
+};
+
+emitter.on('foo', fooHandler);
+
+// Emit twice
+emitter.emit('foo');
+emitter.emit('foo');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"In this sample, we unsubscribe from the event after it is raised once. As a result, the second event goes unnoticed.
+"); ?></p>
+
+      <h4 class="section-header">Has This Event Ever Been Raised?</h4>
+      <p><?php echo nl2br(
+"It is a common use case that you don’t care about every time an event is raised—just that it is raised once. For this, EventEmitter provides a function `once` that calls the registered listener only once. Listing 5-20 demonstrates its usage.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-20. events/5once.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+emitter.once('foo', function () {
+    console.log('foo has been raised');
+});
+
+// Emit twice
+emitter.emit('foo');
+emitter.emit('foo');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"The event listener for foo will only be called once.
+"); ?></p>
+
+      <h4 class="section-header">Listener Management</h4>
+      <p><?php echo nl2br(
+"There are a few additional utility functions available on the EventEmitter that you need to be aware of to be a Node.js event-handling expert.
+
+EventEmitter has a member function, listeners, that takes an event name and returns all the listeners subscribed to that event. This can be very useful when you are debugging event listeners. Listing 5-21 demonstrates its usage.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-21. events/6listeners.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+emitter.on('foo', function a() { });
+emitter.on('foo', function b() { });
+
+console.log(emitter.listeners('foo')); // [ [Function: a], [Function: b]]
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"EventEmitter instances also raise a `newListener` event whenever a new listener is added and `removeListener` whenever a listener is removed, which can help you out in tricky situations such as when you want to track down the instant an event listener is registered/unregistered. It can also be useful for any management you want to do when listeners are added or removed, as shown in Listing 5-22.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-22. events/7listenerevents.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+// Listener addition / removal notifications
+emitter.on('removeListener', function (eventName, listenerFunction) {
+    console.log(eventName, 'listener removed', listenerFunction.name);
+});
+emitter.on('newListener', function (eventName, listenerFunction) {
+    console.log(eventName, 'listener added', listenerFunction.name);
+});
+
+function a() { }
+function b() { }
+
+// Add
+emitter.on('foo', a);
+emitter.on('foo', b);
+
+// Remove
+emitter.removeListener('foo', a);
+emitter.removeListener('foo', b);
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Note that if you add a `removeListener` after adding a handler for `newListener`, you will get notified about the `removeListener` addition as well, which is why it is conventional to add the removeListener event handler first as we did in this sample.
+"); ?></p>
+
+      <h4 class="section-header">EventEmitter Memory Leaks</h4>
+      <p><?php echo nl2br(
+"A common source of memory leaks when working with events is subscribing to events in a callback but forgetting to unsubscribe at the end. By default, EventEmitter will tolerate 10 listeners for each event type—anymore and it will print a warning to the console. This warning is specifically for your assistance. All you code will continue to function. In other words, more listeners will be added without warning and all listeners will be called when an event is raised, as shown in Listing 5-23.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-23. events/8maxEventListeners.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+var listenersCalled = 0;
+
+function someCallback() {
+    // Add a listener
+    emitter.on('foo', function () { listenersCalled++ });
+
+    // return from callback
+}
+
+for (var i = 0; i < 20; i++) {
+    someCallback();
+}
+emitter.emit('foo');
+console.log('listeners called:', listenersCalled); // 20
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"The output from the application is shown in Listing 5-24. You can see that despite the warning, all 20 listeners were called when we emitted the event.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-24. Running the Max Event Listeners Demo
+$ node 8maxEventListeners.js
+(node) warning: possible EventEmitter memory leak detected. 11 listeners added.
+Use emitter.setMaxListeners() to increase limit.
+Trace
+    at EventEmitter.addListener (events.js:160:15)
+    at someCallback (/path/to/8maxEventListeners.js:8:13)
+    at Object.<anonymous> (/path/to/8maxEventListeners.js:14:5)
+    at Module._compile (module.js:456:26)
+    at Object.Module._extensions..js (module.js:474:10)
+    at Module.load (module.js:356:32)
+    at Function.Module._load (module.js:312:12)
+    at Function.Module.runMain (module.js:497:10)
+    at startup (node.js:119:16)
+    at node.js:902:3
+listeners called: 20
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"A common cause of this memory leak is forgetting to unsubscribe for the event when in an error condition of a callback. A simple solution is to create a new event emitter in the callback. This way the event emitter is not shared, and it is disposed along with all of its subscribers when the callback terminates.
+
+Finally, there are cases where having more than 10 listeners is a valid scenario. In such cases, you can increase a limit for this warning using the setMaxListeners member function, as shown in Listing 5-25.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-25. events/9setMaxListeners.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+// increase limit to 30
+emitter.setMaxListeners(30);
+
+// subscribe 20 times
+// No warning will be printed
+for (var i = 0; i < 20; i++) {
+    emitter.on('foo', function () { });
+}
+console.log('done');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Note that this increases the limit for all event types on this event emitter. Also, you can pass in 0 to allow an unlimited number of event listeners to be subscribed without warning.
+
+Node.js tries to be safe by default; memory leaks can weigh heavily when working on a server environment, which is why this warning message exists.
+"); ?></p>
+
+      <h4 class="section-header">Error Event</h4>
+      <p><?php echo nl2br(
+"An 'error' event is treated as a special exceptional case in Node.js. If there is no listener for it, then the default action is to print a stack trace and exit the program. Listing 5-26 gives a quick sample to demonstrate this.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-26. events/10errorEvent.js
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
+
+// Emit an error event
+// Since there is no listener for this event the process terminates
+emitter.emit('error', new Error('Something horrible happened'));
+
+console.log('this line never executes');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"If you run this code, you will get an output, as shown in Listing 5-27. You should use an Error object if you ever need to raise an error event, as we did in this example. You can also see from the example that the last line containing the console.log never executes as the process terminated.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-27. Sample Run of Error Event Sample
+$ node 10errorEvent.js
+
+events.js:72
+        throw er; // Unhandled 'error' event
+              ^
+Error: Something horrible happened
+    at Object.<anonymous> (/path/to/10errorEvent.js:6:23)
+    at Module._compile (module.js:456:26)
+    at Object.Module._extensions..js (module.js:474:10)
+    at Module.load (module.js:356:32)
+    at Function.Module._load (module.js:312:12)
+    at Function.Module.runMain (module.js:497:10)
+    at startup (node.js:119:16)
+    at node.js:902:3
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Hence, the lesson: Raise the error event only for exceptional circumstances that must be handled.
+"); ?></p>
+
+      <h3 class="section-header">Creating Your Own Event Emitters</h3>
+      <p><?php echo nl2br(
+"Now that you are an expert at handling and raising events in Node.js, a lot of open source surface area opens up to you. A number of libraries export classes that inherit from EventEmitter and, therefore, follow the same event handling mechanism. At this stage, it is useful for you to know how you can extend EventEmitter and create a public class that has all of the functionality of EventEmitter baked in.
+
+All you need to do to create your own EventEmitter is call the EventEmitter constructor from your class’s constructor and use the util.inherits function to set up the prototype chain. This should be second nature to you considering the amount of discussion we gave this at the start of this chapter. Listing 5-28 is a quick example to demonstrate this.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-28. events/11custom.js
+var EventEmitter = require('events').EventEmitter;
+var inherits = require('util').inherits;
+
+// Custom class
+function Foo() {
+    EventEmitter.call(this);
+}
+inherits(Foo, EventEmitter);
+
+// Sample member function that raises an event
+Foo.prototype.connect = function () {
+    this.emit('connected');
+}
+
+// Usage
+var foo = new Foo();
+foo.on('connected', function () {
+    console.log('connected raised!');
+});
+foo.connect();
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"You can see that usage of your class is exactly the same as if it was an EventEmitter. With these two simple lines, you have a fully functional custom event emitter.
+"); ?></p>
+
+      <h3 class="section-header">Process Events</h3>
+      <p><?php echo nl2br(
+"A number of classes inside core Node.js inherit from EventEmitter. The global process object is also an instance of EventEmitter, as you can see in Listing 5-29.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-29. Sample to Demonstrate That Process Is an EventEmitter
+$ node -e "console.log(process instanceof require('events').EventEmitter)"
+true
+      </code>
+      </pre>
+
+      <h4 class="section-header">Global Exception Handler</h4>
+      <p><?php echo nl2br(
+"Any global unhandled exceptions can be intercepted by listening on the `uncaughtException` event on process. You should not resume execution outside this event handler because this only happens when your application is in an unstable state. The best strategy is to log the error for your convenience and exit the process with an error code, as shown in Listing 5-30.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-30. process/1uncaught.js
+process.on('uncaughtException', function (err) {
+    console.log('Caught exception: ', err);
+    console.log('Stack:', err.stack);
+    process.exit(1);
+});
+
+// Intentionally cause an exception, but don't try/catch it.
+nonexistentFunc();
+
+console.log('This line will not run.');
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"If you run the code in Listing 5-30, you get a nice error log, as shown in Listing 5-31.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-31. Sample Run of an Uncaught Exception
+$ node 1uncaught.js
+Caught exception:  [ReferenceError: nonexistentFunc is not defined]
+Stack: ReferenceError: nonexistentFunc is not defined
+    at Object.<anonymous> (E:\DRIVE\Google Drive\BEGINNING NODEJS\code\chapter5\
+process\1uncaught.js:8:1)
+    at Module._compile (module.js:456:26)
+    at Object.Module._extensions..js (module.js:474:10)
+    at Module.load (module.js:356:32)
+    at Function.Module._load (module.js:312:12)
+    at Function.Module.runMain (module.js:497:10)
+    at startup (node.js:119:16)
+    at node.js:902:3
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"The `uncaughtError` event is also raised on a process if any event emitter raises the `error` event and there are no listeners subscribed to the event emitter for this event.
+"); ?></p>
+
+      <h4 class="section-header">Exit</h4>
+      <p><?php echo nl2br(
+"The exit event is emitted when the process is about to exit. There is no way to abort exiting at this point. The event loop is already in teardown so you cannot do any async operations at this point. (See Listing 5-32.)
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-32. process/2exit.js
+process.on('exit', function (code) {
+    console.log('Exiting with code:', code);
+});
+
+process.exit(1);
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Note that the event callback is passed in the exit code that the process is exiting with. This event is mostly useful for debugging and logging purposes.
+"); ?></p>
+
+      <h4 class="section-header">Signals</h4>
+      <p><?php echo nl2br(
+"Node.js process object also supports the UNIX concept of signals, which is a form of inter-process communication. It emulates the most important ones on Windows systems as well. A common scenario that is supported on both Windows and UNIX is when the user tries to interrupt the process using Ctrl+C key combination in the terminal. By default, Node.js will exit the process. However, if you have a listener subscribed to the `SIGINT` (signal interrupt) event, the listener is called and you can choose if you want to exit the process (process.exit) or continue execution. Listing 5-33 provides a small sample where we chose to continue running and exit after five seconds.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-33. process/3signals.js
+setTimeout(function () {
+    console.log('5 seconds passed. Exiting');
+}, 5000);
+console.log('Started. Will exit in 5 seconds');
+
+process.on('SIGINT', function () {
+    console.log('Got SIGINT. Ignoring.');
+});
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"If you execute this example and press Ctrl+C, you will get a message that we are choosing to ignore this. Finally, the process will exit after five seconds naturally once we don’t have any pending tasks (demonstrated in Listing 5-34).
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-34. Sample Run of Ignoring Ctrl+C Messages Demo
+$ node 3signals.js
+Started. Will exit in 5 seconds
+Got SIGINT. Ignoring.
+Got SIGINT. Ignoring.
+5 seconds passed. Exiting
+      </code>
+      </pre>
+	  
+	    <br>
+	    <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../dist/js/test.min.js"></script>
+    <script src="../../dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>

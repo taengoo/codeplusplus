@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Code++</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/test-theme.css" rel="stylesheet">
+
+    <link href="../../dist/css/highlight-default.css" rel="stylesheet">
+    <link href="../../dist/css/highlight-theme.css" rel="stylesheet">
+  
+  <style>.hljs { padding: 0 1.5em; }</style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Code++</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <div class="page-heading">
+        <h1 class="page-title">Section 5.1</h1>
+      </div>
+
+      <h3 class="section-header">CLASSICAL INHERITANCE IN JAVASCRIPT</h3>
+      <p><?php echo nl2br(
+"We saw how prototype works in Section 2. JavaScript supports prototypal inheritance. In JavaScript, a member is looked up on the current item (such as item.foo), followed by its prototype (item.__proto__.foo), which is followed by its prototype’s prototype (item.__proto__.__proto__.foo), and so on until the prototype itself (for example, item.__proto__.__proto__.__proto__) is null. We have already seen how this can be used to emulate a classical object oriented class construct in JavaScript. Now let’s look at how it can be used to implement classical object oriented inheritance.
+"); ?></p>
+
+      <h3 class="section-header">Arriving at an Inheritance Pattern</h3>
+      <p><?php echo nl2br(
+"Let’s create an Animal class. It has a simple member function called walk. We’ve already discussed that `this` within a function refers to the newly created object when a function is called with the `new` operator (for example, `new Animal`). We also discussed that the prototype member of the constructor function (Animal.prototype) is referenced by the object prototype (animal.__proto__) because of using the new operator. (See Listing 5-1).
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-1. oo/1animal.js
+function Animal(name) {
+    this.name = name;
+}
+Animal.prototype.walk = function (destination) {
+    console.log(this.name, 'is walking to', destination);
+};
+
+var animal = new Animal('elephant');
+animal.walk('melbourne'); // elephant is walking to melbourne
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"To better understand how the lookup is performed on `animal.walk`, have a look at the diagram in Figure 5-1.
+
+Figure 5-1. Sample lookup of member from prototype
+
+Now let’s inherit all of the Animal class functionality in a new class, for example, Bird. To do this, we need to do two things:
+-    Call the Animal constructor from the Bird constructor. This ensures that the properties are set up properly for the Bird object (Animal.name in our example).
+-    Find a way to make all parent (Animal) prototype members (for example, __proto__.walk) a member of the child (Bird) instance’s prototype’s prototype. This will allow Bird instances (for example, bird) to have their own functions on their own prototype (bird.__proto__.fly) and the parent members on their prototype’s prototype (bird.__proto__.__proto__.walk). This is called setting up a prototype chain.
+
+We will begin by fleshing out the Bird class. Based on the algorithm, it will look like the code in Listing 5-2.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-2. Building Up to Inheritance
+function Bird(name){
+    // Call the Animal constructor
+}
+// Setup the prototype chain between Bird and Animal
+
+// Finally create child instance
+var bird = new Bird('sparrow');
+      </code>
+      </pre>
+    
+      <h4 class="section-header">Calling the Parent Constructor</h4>
+      <p><?php echo nl2br(
+"We cannot simply call the parent Animal constructor from Bird. That is because if we do so, then `this` within Animal will not refer to the newly created Bird object (created from new Bird). Hence, we need to force the meaning of this within the Animal function to point to the value of this inside the Bird function. Fortunately, we can force the meaning by using the '.call' member function available on all JavaScript functions (it comes from Function.prototype). Listing 5-3 presents a demonstration of the call member. As usual, the comments explain what is going on.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-3. oo/2call.js
+var foo = {};
+var bar = {};
+
+// A function that uses `this`
+function func(val) {
+    this.val = val;
+}
+
+// Force this in func to be foo
+func.call(foo, 123);
+
+// Force this in func to be bar
+func.call(bar, 456);
+
+// Verify:
+console.log(foo.val); // 123
+console.log(bar.val); // 456
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"You can see that we forced `this` inside the `func` function to be foo and then bar. Great! Now that we know how to force this, let’s use it to call the parent, as shown in Listing 5-4.
+"); ?></p>
+
+// Listing 5-4. Calling the Parent Constructor
+function Bird(name){
+    Animal.call(this,name);
+
+    // Any additional initialization code you want
+}
+// Copy all Animal prototype members to Bird
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"You use this pattern (Parent.call(this, /* additional args */)) every time you need to call a parent constructor. Now you have a firm functional understanding of why this is.
+"); ?></p>
+
+      <h4 class="section-header">Setting Up the Prototype Chain</h4>
+      <p><?php echo nl2br(
+"We need a mechanism so that when we create a new Bird (such as, bird = new Bird), its prototype chain contains all the parent prototype functions (for example, bird.__proto__.__proto__.walk). This can be done quite simply if we do Bird.prototype.__proto__ = Animal.prototype.
+
+This process works because when we will do bird = new Bird, we will effectively get bird.__proto__.__proto__ = Animal.prototype and that will make the parent prototype members (for example, Animal.prototype.walk) available on the child prototype (bird.__proto__.__proto__.walk), which was the desired result. Listing 5-5 shows a simple code sample.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-5. oo/3prototype.js
+// Animal Base class
+function Animal(name) {
+    this.name = name;
+}
+Animal.prototype.walk = function (destination) {
+    console.log(this.name, 'is walking to', destination);
+};
+
+var animal = new Animal('elephant');
+animal.walk('melbourne'); // elephant is walking to melbourne
+
+// Bird Child class
+function Bird(name) {
+    Animal.call(this, name);
+}
+Bird.prototype.__proto__ = Animal.prototype;
+Bird.prototype.fly = function (destination) {
+    console.log(this.name, 'is flying to', destination);
+}
+
+var bird = new Bird('sparrow');
+bird.walk('sydney'); // sparrow is walking to sydney
+bird.fly('melbourne'); // sparrow is flying to melbourne
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"To understand how an inherited member (bird.walk in our example) lookup is performed, take a look at Figure 5-2.
+
+Figure 5-2. Sample lookup of a member from a prototype chain
+
+Note that manually modifying the __proto__ property is not recommended since it isn’t a part of the ECMAScript standard. We will discuss a more standard way of setting the prototype shortly, but the principle shown here makes you an expert of JavaScript prototypal inheritance.
+"); ?></p>
+
+      <h3 class="section-header">The Constructor Property</h3>
+      <p><?php echo nl2br(
+"By default, every function gets a member called `prototype`, which we have already seen. By default, this member has a constructor property that points to the function itself. Listing 5-6 demonstrates this.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-6. oo/4constructor/1basic.js
+function Foo() { }
+console.log(Foo.prototype.constructor === Foo); // true
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"What is the advantage of having this property? After you create an instance using a function (for example, instance = new Foo), you can get access to the constructor using a simple lookup instance.constructor (which is really going to be looking at instance.__proto__.constructor). Listing 5-7 shows this in an example where we use the property name of named functions (function Foo) to log out what created the object.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-7. oo/4constructor/2new.js
+function Foo() { }
+
+var foo = new Foo();
+console.log(foo.constructor.name); // Foo
+console.log(foo.constructor === Foo); // true
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Having knowledge of the constructor property enables you to do runtime reflection on instances if you need to.
+"); ?></p>
+
+      <h3 class="section-header">The Proper Node.js Way</h3>
+      <p><?php echo nl2br(
+"The util core module (require('utils')) we discussed in Section 3 provides a lovely little function to create the prototype chain for us so you don’t need to mess with `__proto__` (the nonstandard property) yourself. The function is called `inherits` and takes a child class followed by parent class, as shown in the example in Listing 5-8. Bird class extends the Animal class, which we saw earlier.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-8. oo/5nodejs/util.js
+// util function
+var inherits = require('util').inherits;
+
+// Bird Child class
+function Bird(name) {
+    // Call parent constructor
+    Animal.call(this, name);
+
+    // Additional construction code
+}
+inherits(Bird, Animal);
+
+// Additional member functions
+Bird.prototype.fly = function (destination) {
+    console.log(this.name, 'is flying to', destination);
+}
+
+var bird = new Bird('sparrow');
+bird.walk('sydney'); // sparrow is walking to sydney
+bird.fly('melbourne'); // sparrow is flying to melbourne
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"There are two things of note:
+-    Call the parent constructor: Animal.call(this, /* any original arguments */)
+-    Set up the prototype chain: inherits(Bird, Animal);
+
+Simple enough to become second nature, this is all you need to do to inherit classes!
+"); ?></p>
+
+      <h3 class="section-header">Overriding Functions in Child Classes</h3>
+      <p><?php echo nl2br(
+"To override parent functions but still utilize some of the original functionality, simply do the following:
+-    Create a function on the child prototype with the same name.
+-    Call the parent function similar to the way we called the parent constructor, basically using the Parent.prototype.memberfunction.call(this, /*any original args*/) syntax.
+
+Listing 5-9 demonstrates this.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-9. oo/6override.js
+// util function
+var inherits = require('util').inherits;
+
+// Base
+function Base() { this.message = "message"; };
+Base.prototype.foo = function () { return this.message + " base foo" };
+
+// Child
+function Child() { Base.call(this); };
+inherits(Child, Base);
+
+// Overide parent behaviour in child
+Child.prototype.foo = function () {
+    // Call base implementation + customize
+    return Base.prototype.foo.call(this) + " child foo";
+}
+
+// Test:
+var child = new Child();
+console.log(child.foo()); // message base foo child foo
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"We simply created the child function Child.prototype.foo and called the parent function from within Base.prototype.foo.call(this).
+"); ?></p>
+
+      <h3 class="section-header">Checking Inheritance Chain</h3>
+      <p><?php echo nl2br(
+"Setting up a prototype chain (__proto__.__proto__) as we have seen has an additional advantage in that it allows you to check if a particular object instance is of a particular class, or its parent class, or its parent’s parent class, and so on. This is done using the instanceof operator.
+
+In pseudocode when you do someObj instanceof Func the you use this algorithm:
+-    Check someObj.__proto__ == Func.prototype and if so return true.
+-    If not, check someObj.__proto__.__proto__ == Func.prototype and if so return true.
+-    Repeat moving up the prototype chain.
+-    If __proto__ is null and we haven’t found a match, return false.
+
+From the pseudocode, you can see that it is very similar to how a property lookup is performed. We travel up the prototype chain until we find a __proto__ equal to the Func.prototype. Finding a match is an indication of the new operator being used on the specified Func as the new operator copies prototype to __proto__. A quick demonstration of using instanceof is shown in Listing 5-10.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-10. oo/7instanceof.js
+var inherits = require('util').inherits;
+
+function A() { }
+function B() { }; inherits(B, A);
+function C() { }
+
+var b = new B();
+console.log(b instanceof B); // true because b.__proto__ == B.prototype
+console.log(b instanceof A); // true because b.__proto__.__proto__ == A.prototype
+console.log(b instanceof C); // false
+      </code>
+      </pre>
+
+      <h3 class="section-header">Deeper Understanding of the Internals of util.inherits</h3>
+      <p><?php echo nl2br(
+"You do not need to go through this section, but it is worthwhile just so you can sit at the cool kids’ table. We said that setting __proto__ manually is not recommended as it is not a part of the standardized JavaScript.
+
+Fortunately, there is a function in JavaScript that can create a blank object with a specified __proto__ already set. The function is called Object.create and the way it works is shown in Listing 5-11.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-11. oo/8internals/1check.js
+var foo = {};
+var bar = Object.create(foo);
+console.log(bar.__proto__ === foo); // true
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"In this example, we simply verified that the newly created object (that is, bar) has its __proto__ member set to what we passed into Object.create (in other words, foo). It can be used for inheritance as shown in Listing 5-12.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-12. oo/8internals/2inherit.js
+// Animal Base class
+function Animal() {
+}
+Animal.prototype.walk = function () {
+    console.log('walking');
+};
+
+// Bird Child class
+function Bird() {
+}
+Bird.prototype = Object.create(Animal.prototype);
+
+var bird = new Bird();
+bird.walk();
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"Compared to the original non-standard __proto__ mechanism we showed before, here we simply replaced Bird.prototype.__proto__ = Animal.prototype with what is effectively Bird.prototype = { __proto__ : Animal.prototype }.
+
+This mechanism correctly inherits the members from the parent, but it creates one slight problem. When we reassigned Bird.prototype, the constructor information that was there in Bird.prototype.constructor was lost because we reassigned Bird.prototype to a completely new object. To bring the constructor property back, a simple solution is to pass a second parameter to Object.create, which specifies additional properties to add to the object to be created. In Listing 5-13, we specify that the constructor is a property that points to the function itself, which is what the Bird.prototype.constructor was originally (remember that Bird.prototype.constructor === Bird).
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-13. oo/8internals/3inheritBetter.js
+// Animal Base class
+function Animal() {
+}
+Animal.prototype.walk = function () {
+    console.log('walking');
+};
+
+// Bird Child class
+function Bird() {
+}
+Bird.prototype = Object.create(Animal.prototype, {
+    constructor: {
+        value: Bird,
+        enumerable: false,
+        writable: true,
+        configurable: true
+    }
+});
+
+var bird = new Bird();
+bird.walk();
+console.log(bird.constructor === Bird); // true
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"And this is exactly the implementation found in Node.js util module (which is written in JavaScript). The implementation straight from the source is shown in Listing 5-14.
+"); ?></p>
+
+      <pre><code class="javascript">
+// Listing 5-14. Code Retrieved from Node.js source util.js
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = Object.create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
+      </code>
+      </pre>
+    
+      <p><?php echo nl2br(
+"One more thing that the inherits function does is it adds a property super_ to the child class, which points to the parent class. This is simply for convention so that you know that this child function prototype has received members from this super_ class when debugging or writing reflection-based code.
+
+Mastering inheritance is so involved because JavaScript was designed with simple prototypal inheritance. We are simply utilizing the power offered by it to mimic a traditional OO hierarchy.
+"); ?></p>
+    
+    <br>
+    <br>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="../../dist/js/test.min.js"></script>
+    <script src="../../dist/js/highlight.pack.js"></script>
+    <script>
+    hljs.configure({ tabReplace: '  ' });
+    hljs.initHighlightingOnLoad();
+    </script>
+  </body>
+</html>
