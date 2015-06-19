@@ -1,0 +1,23 @@
+
+
+body {
+	background-color: #222;
+}
+
+#container {
+	width: 100%;
+	max-width: 480px;
+	margin: 0 auto;
+	padding-top: 50px;
+	text-align: center;
+}
+
+canvas {
+	background-color: #000;
+}
+
+#testShip {
+	width: 100px;
+	height: 100px;
+	background: #000 url(images/sprites.png) top left no-repeat;
+}
