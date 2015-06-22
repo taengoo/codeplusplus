@@ -1,0 +1,771 @@
+
+SECTION 2: MAKING IT A GAME
+
+2.1 Creating the GameBoard Object 
+	- Understanding the GameBoard 
+	- Adding and Removing Objects 
+	- Iterating over the List of Objects 
+	- Defining the Board Methods 
+	- Handling Collisions 
+	- Adding GameBoard into the Game
+2.2 Firing Missiles 
+	- Adding a Bullet Sprite 
+	- Connecting Missiles to the Player
+2.3 Adding Enemies 
+	- Calculating Enemy Movement 
+	- Constructing the Enemy Object 
+	- Stepping and Drawing the Enemy Object 
+	- Adding Enemies on the Board
+2.4 Refactoring the Sprite Classes 
+	- Creating a Generic Sprite Class 
+	- Refactoring PlayerShip 
+	- Refactoring PlayerMissile 
+	- Refactoring Enemy
+2.5 Handling Collisions 
+	- Adding Object Types 
+	- Colliding Missiles with Enemies 
+	- Colliding Enemies with the Player 
+	- Making It Go Boom
+2.6 Representing Levels 
+	- Setting Up the Enemies 
+	- Setting Up Level Data 
+	- Loading and Finishing a Level 
+	- Implementing the Level Object 
+2.7 Summary
+
+
+----
+SECTION 2: MAKING IT A GAME
+----
+
+In Section 1, “Flying Before You Walk,” you put together the framework of your first
+HTML5 mobile game and got a spaceship flying around the screen. Until this point what's
+been built so far is more a toy than a game. To make it a game, you need to add some enemies
+and set up the various elements of the game so that they can interact with each other.
+
+
+----
+2.1 CREATING THE GAMEBOARD OBJECT
+----
+The first step to turning Alien Invasion into a game is to add a mechanism that handles a
+bunch of sprites on the page at the same time. The current Game object can handle a stack of
+boards, but those boards all act independently of each other. Also, although the Game object
+provides a mechanism to swap boards in and out, it doesn't make it easy to add an arbitrary
+number of sprites onto the page. Enter the GameBoard object.
+
+----
+Understanding the GameBoard
+----
+The purpose of the GameBoard object is much like the game board in a game of checkers. It provides
+a spot to drop all the pieces and dictates their movement. In this section you break down some of
+the responsibilities of this object. The responsibilities of the GameBoard can be broken down into
+four distinct categories:
+- It is responsible for keeping a list of objects and handling adding sprites to and removing
+sprites from that list.
+- It also needs to handle looping over that list of objects.
+- It needs to respond the same way as previous boards. It needs to have a step and a draw
+function that calls the appropriate functions on each of the objects in the object list.
+- It needs to handle checking of collisions between objects.
+
+The next few sections walk through each of the parts of the GameBoard object, which will behave
+like a simple scene graph. Scene graphs are discussed in detail in Chapter 12, “Building Games with
+CSS3.” The GameBoard class will be added to the bottom of the engine.js file.
+
+----
+Adding and Removing Objects
+----
+The first and most important responsibility of the GameBoard class is to keep track of the objects in
+play. The easiest way to keep track of a list of objects is simply to use an array, in this case an array
+called objects.
+
+The GameBoard class will be described piecemeal, but the whole thing goes at the bottom of the
+engine.js file:
+
+var GameBoard = function() {
+var board = this;
+// The current list of objects
+this.objects = [];
+this.cnt = [];
+
+This array is where objects that show up in the game are added to and removed from.
+Next, the class needs the capability to add objects. This is simple enough. Pushing objects onto the
+end of the objects’ list gets most of the job done:
+
+// Add a new object to the object list
+this.add = function(obj) {
+obj.board=this;
+this.objects.push(obj);
+this.cnt[obj.type] = (this.cnt[obj.type] || 0) + 1;
+return obj;
+};
+
+For an object to interact with other objects, however, it needs access to the board it’s a part of. For
+this reason when GameBoard.add is called, the board sets a property called board on the object.
+The object can now access the board to add additional objects, such as projectiles or explosions, or
+remove itself when it dies.
+
+The board also must keep a count of the number of objects of different types that are active at a
+given time, so the second-to-last line of the function initializes the count to zero if necessary using a
+boolean OR and then increments that count by 1. Objects won’t be assigned types until later in this
+chapter, so this is a little bit of forward-looking code.
+
+Next is removal. This process is slightly more complicated than it first might seem because objects
+may want to remove themselves or other objects in the middle of a step while the GameBoard loops
+over the list of objects. A naive implementation would try to update GameBoard.objects but
+because the GameBoard would be in the middle of looping over all the objects, changing them midloop
+would cause problems with the looping code.
+
+One option is to make a copy of the list of objects at the beginning of each frame, but this could get
+costly to do each frame. The best solution is to first mark objects for removal in a separate array and
+then actually remove them from the object list after every object has had its turn. Following is the
+solution GameBoard uses:
+
+// Mark an object for removal
+this.remove = function(obj) {
+var wasStillAlive = this.removed.indexOf(obj) != -1;
+if(wasStillAlive) { this.removed.push(obj); }
+return wasStillAlive;
+};
+// Reset the list of removed objects
+this.resetRemoved = function() { this.removed = []; }
+// Remove objects marked for removal from the list
+this.finalizeRemoved = function() {
+for(var i=0,len=this.removed.length;i<len;i++) {
+var idx = this.objects.indexOf(this.removed[i]);
+if(idx != -1) {
+this.cnt[this.removed[i].type]--;
+this.objects.splice(idx,1);
+}
+}
+}
+
+At the beginning of each step, resetRemoved is called to reset the list of objects to be removed.
+The remove method first checks if an object has already been removed and then adds it to the list of
+objects to remove only if it’s not already there. It then returns true if the object was added or false
+if the object was already dead. After every object has its turn, finalizeRemoved is called. This
+method finds the removed objects in the objects list using Array.indexOf and then uses the Array
+.splice method to cut those objects out of the list. When an object is removed from the list, it is
+effectively dead because it no longer has its step and draw methods called.
+
+----
+Iterating over the List of Objects
+Because much of what GameBoard does is iterate over a list of objects, it stands to reason that
+a couple of helper methods to make that easier would come in handy. Two main methods are
+needed. First, a simple iterate method that calls the same function on every object in the object list
+is useful for the step and draw methods. Second, a detect method that returns the first object for
+which a passed-in function returns true makes collision detection easier. Both of these methods
+are listed here:
+
+First up is iterate:
+
+// Call the same method on all current objects
+this.iterate = function(funcName) {
+var args = Array.prototype.slice.call(arguments,1);
+for(var i=0,len=this.objects.length;i<len;i++) {
+var obj = this.objects[i];
+obj[funcName].apply(obj,args)
+}
+};
+
+Although the meat of the function is just a loop over this.objects, the method does have a couple
+of interesting JavaScript features.
+
+The first line of the method is a well-known JavaScript hack. The arguments object, which is available
+in every method call, contains a list of the arguments passed into that method and is used by
+methods that accept varying numbers of arguments. arguments acts in many ways like an array, but
+it’s not an actual array. This is a shame because in this case you’d like to get all the arguments out
+except for the first, which is the funcName, so that they can be passed on to the function to be called
+on every object. arguments doesn’t have the slice method, but because JavaScript enables you to
+take methods and apply them to whatever object you like using call or apply, the line
+
+var args = Array.prototype.slice.call(arguments,1);
+
+can do just that and turn the arguments object into a proper array starting at the second element.
+Inside of the loop the code looks up the method in the object’s properties using the square bracket
+operator and then calls apply to call that method with whatever the passed in arguments are.
+Next is the detect method, which will be used later for collision detection. Its job is to run the same
+function on all of a board’s objects and return the first object that the function returns true for. In
+the abstract this doesn’t seem all that useful, but if you need to do collision detection or find a specific
+object based on certain parameters, the detect method is useful.
+
+// Find the first object for which func is true
+this.detect = function(func) {
+for(var i = 0,val=null, len=this.objects.length; i < len; i++) {
+if(func.call(this.objects[i])) return this.objects[i];
+}
+return false;
+};
+
+detect consists of a loop over the objects and a call to the passed-in function with the object passed
+in as the this context. If that function returns true, then the object is returned; otherwise, the
+functions returns false after it runs out of objects to compare against.
+
+----
+Defining the Board Methods
+----
+Next are the standard board functions, step and draw. Using the methods already defined, these
+functions have trivial definitions:
+
+// Call step on all objects and then delete
+// any objects that have been marked for removal
+this.step = function(dt) {
+this.resetRemoved();
+this.iterate('step',dt);
+this.finalizeRemoved();
+};
+// Draw all the objects
+this.draw= function(ctx) {
+this.iterate('draw',ctx);
+};
+
+Both step and draw use the iterate method to call a specifically named function on each object in
+the list, with step also making sure to reset and finalize the list of removed items.
+
+----
+Handling Collisions
+----
+The last bit of functionality in the purview of GameBoard is the handling of collisions. Alien
+Invasion uses a simplified collision model that reduces each of the sprites on the board to a simple
+rectangular bounding box. If the bounding boxes of two different objects overlap, then those two
+sprites are deemed to be colliding. Because each sprite has an x and a y position in addition to a
+width and a height, this box is easy to calculate.
+
+NOTE A bounding box is the smallest rectangle that encompasses the entirety of
+an object. Using bounding boxes to do collision detection instead of polygons or
+exact pixel data is faster to calculate, but is much less accurate.
+
+GameBoard uses two functions to handle collision detection. The first, overlap, simply checks for
+the overlap between two objects’ bounding boxes and returns true if they intersect. The easiest way
+to do this detection is clever. Rather than check whether one object is in the other, you simply need
+to check if one object couldn’t be in the other and negate the result.
+
+this.overlap = function(o1,o2) {
+return !((o1.y+o1.h-1<o2.y) || (o1.y>o2.y+o2.h-1) ||
+(o1.x+o1.w-1<o2.x) || (o1.x>o2.x+o2.w-1));
+};
+
+What’s going on here is that the bottom edge of object one is checked against the bottom edge
+of object two to see if object one is to the right of object two. Next, the top edge of object one is
+checked against the bottom edge of object two and so on through each of the corresponding edges.
+If any of these are true, you know object one doesn’t overlap object two. By simply negating the
+result of this detection, you can tell if the two objects overlap.
+
+With a function in your pocket to determine overlap, it becomes easy to check one object against all
+the other objects in the list.
+
+this.collide = function(obj,type) {
+return this.detect(function() {
+if(obj != this) {
+var col = (!type || this.type & type) && board.overlap(obj,this)
+return col ? this : false;
+}
+});
+};
+
+Collide uses the detect function to match the passed-in object against all the other objects and
+returns the first object for which overlap returns true. The only complication is the support for an
+optional type parameter. The idea behind this is that different types of objects want to collide with
+only certain objects. Enemies, for example, don’t want to collide with themselves, but they do want
+to collide with the player and the player’s missiles. By doing a bitwise AND operation, collisions
+against objects of multiple types can be performed without the loss of speed that an array or hash
+lookup would require. One caveat is that each of the different types must be a power of two to prevent
+overlap of different types.
+
+For example, if types were defined as the following:
+
+var OBJECT_PLAYER = 1,
+OBJECT_PLAYER_PROJECTILE = 2,
+OBJECT_ENEMY = 4,
+OBJECT_ENEMY_PROJECTILE = 8;
+
+an enemy could check if it collides with a player or a player’s missile by doing a bitwise OR of the
+two types together:
+
+board.collide(enemy, OBJECT_PLAYER | OBJECT_PLAYER_PROJECTILE)
+
+Objects can also be assigned multiple types, and the collide function would still work as planned.
+With that, the GameBoard class is complete. See gameboard/engine.js for the full version of the
+object in the code for this chapter.
+
+----
+Adding GameBoard into the Game
+----
+With the GameBoard class complete, the next step is to add it into the game. A quick modification of
+the playGame function from game.js does the trick:
+
+var playGame = function() {
+var board = new GameBoard();
+board.add(new PlayerShip());
+Game.setBoard(3,board);
+}
+
+Reload the index.html file, and you should see exactly the same behavior as at the end of Chapter 1.
+All that’s been done is to have the GameBoard take over managing the ship sprite. This is less than
+impressive because so far the game isn’t putting the GameBoard class to good use because it just has
+a single sprite in it. This is remedied in the next section.
+
+
+----
+2.2 FIRING MISSILES
+----
+Now it’s time to give the player something to do besides just fly left and right across the screen. You
+are going to bind the spacebar to fire off a pair of projectiles.
+
+----
+Adding a Bullet Sprite
+----
+The first step to giving the player some destructive capacity is to create a blueprint for the player
+missile object. This object is added to the game at the player’s location whenever the player presses
+the fire key.
+
+The PlayerShip object didn’t use the object prototype to create methods because in general there
+is only one player in the game at a time so it’s unnecessary to optimize for object creation speed
+or memory footprint. To contrast, there are going to be a lot of PlayerMissiles added to the
+game over the course of a level, so making sure they are quick to create and small from a memory
+usage standpoint is a good idea. (The JavaScript garbage collector can cause noticeable hiccups in
+game performance, so making its job easier is in your best interest.) Because of the frequency with
+which PlayerMissile objects are going to be created, using object prototypes makes a lot of sense.
+Functions created on an object’s prototype need to be created and stored in memory only once.
+Add the following highlighted text to the top of game.js to put in the sprite definition for the
+missile (don’t forget the comma on the previous line):
+
+var sprites = {
+ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
+missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 }
+};
+
+Next add the full PlayerMissile object (see Listing 2-1) to the bottom of game.js:
+
+// LISTING 2-1: The PlayerMissile Object
+var PlayerMissile = function(x,y) {
+this.w = SpriteSheet.map['missile'].w;
+this.h = SpriteSheet.map['missile'].h;
+// Center the missile on x
+this.x = x - this.w/2;
+// Use the passed in y as the bottom of the missile
+this.y = y - this.h;
+this.vy = -700;
+};
+PlayerMissile.prototype.step = function(dt) {
+this.y += this.vy * dt;
+if(this.y < -this.h) { this.board.remove(this); }
+};
+PlayerMissile.prototype.draw = function(ctx) {
+SpriteSheet.draw(ctx,'missile',this.x,this.y);
+};
+
+The initial version of the PlayerMissile class clocks in at a mere 14 lines and much of it is boilerplate
+you’ve seen before. The constructor function simply sets up a number of properties on the
+sprite, pulling the width and height from the SpriteSheet. Because the player fires missiles vertically
+upward from a turret location, the constructor uses the passed-in y location for the location of
+the bottom of the missile by subtracting the height of the missile to determine its starting y location.
+It also centers the missile on the passed-in x location by subtracting half the width of the sprite.
+
+As discussed previously, the step and draw methods are created on the prototype to be efficient.
+Because the player’s missile moves only vertically up the screen, the step function needs to adjust
+only the y property and check if the missile has moved completely off the screen in the y direction.
+If the missile has moved more than its height off the screen (that is, this.y < -this.h), it removes
+itself from the board.
+
+Finally, the draw method just draws the missile sprite at the missile’s x and y locations using the
+SpriteSheet object.
+
+----
+Connecting Missiles to the Player
+----
+To actually get a missile onto the screen, the PlayerShip needs to be updated to respond to the fire
+key and add a pair of missiles onto the screen for each of its two turrets. You also need to add in a
+reloading period to limit the speed at which missiles are fired.
+
+To put in this limit, you must add a new property called reload, which represents the remaining
+time before the next pair of missiles can be fired. You also must add another property called
+reloadTime, which represents the full reloading time. Add the following two initialization lines to
+the top of the PlayerShip constructor method:
+
+var PlayerShip = function() {
+this.w = SpriteSheet.map['ship'].w;
+this.h = SpriteSheet.map['ship'].h;
+this.x = Game.width / 2 - this.w / 2;
+this.y = Game.height - 10 - this.h;
+this.vx = 0;
+this.reloadTime = 0.25; // Quarter second reload
+this.reload = this.reloadTime;
+
+reload is set to reloadTime to prevent the player from immediately firing a missile when they press
+fire to start the game.
+
+Next, modify the step method to read as follows:
+
+this.step = function(dt) {
+if(Game.keys['left']) { this.vx = -this.maxVel; }
+else if(Game.keys['right']) { this.vx = this.maxVel; }
+else { this.vx = 0; }
+this.x += this.vx * dt;
+if(this.x < 0) { this.x = 0; }
+else if(this.x > Game.width - this.w) {
+this.x = Game.width - this.w
+}
+this.reload-=dt;
+if(Game.keys['fire'] && this.reload < 0) {
+Game.keys['fire'] = false;
+this.reload = this.reloadTime;
+this.board.add(new PlayerMissile(this.x,this.y+this.h/2));
+this.board.add(new PlayerMissile(this.x+this.w,this.y+this.h/2));
+}
+}
+
+This code adds two new player missiles on the left and right sides of the ship if the player presses
+the fire key and is not in the process of reloading. Firing a missile simply consists of adding it to
+the board at the right location. The reload property is also reset to reloadTime to add in a delay
+between missiles being fired. To ensure the player needs to press and release the spacebar to fire and
+can’t just hold it down, the key is set to false. (This doesn’t quite have the intended effect because
+keydown events are fired on repeat)
+
+Reload the game (or fire up http://mh5gd.com/ch2/missiles/) and test out firing some missiles.
+You can adjust reloadTime to see the effect it has on the speed missiles are fired.
+
+
+----
+2.3 ADDING ENEMIES
+----
+A space shooter isn’t any fun without enemies, so next you will add some enemies into the game
+by creating an Enemy sprite class. Although there will be multiple types of enemies, they are all
+represented by the same class and differentiated only by different templates for their image and
+movement.
+
+----
+Calculating Enemy Movement
+----
+You define the movement for enemies with an equation that contains a few pluggable parameters
+that enable enemies to exhibit relatively complex behavior without a lot of code. The equation sets
+the velocity of an enemy at a given time since it was added to the board:
+
+vx = A + B * sin(C * t + D)
+vy = E + F * sin(G * t + H)
+
+All the letters A through H represent constant numbers. Don’t let these equations intimidate you.
+All they say is that the velocity of an enemy is based on a constant value plus a value that repeats
+cyclically. (Using a sine enables the cyclical value.) Using an equation such as this allows the game
+to add enemies that twirl around the screen in interesting patterns and adds some dynamism to
+the game that a bunch of enemies flying in a straight line wouldn’t. Sines and cosines are used
+often in game development for animation because they provide a mechanism for smooth movement
+transitions. See Table 2.1 for a description of the effect each parameter A–H has on the
+movement of an enemy.
+
+NOTE Parabolas created with quadratic equations ( a + bx + cx*x ) are also useful
+for this but don't provide periodic behavior, so they aren’t quite as useful in
+this situation.
+
+TABLE 2-1: Parameter Descriptions
+PARAMETER DESCRIPTION
+A Constant horizontal velocity
+B Strength of horizontal sinusoidal velocity
+C Period of horizontal sinusoidal velocity
+D Time shift of horizontal sinusoidal velocity
+E Constant vertical velocity
+F Strength of vertical sinusoidal velocity
+G Period of vertical sinusoidal velocity
+
+A number of different combinations of values produce different behaviors. If B and F are set to zero,
+then the enemy flies straight because the sinusoidal component in both directions is zero. If F and A
+are set to zero, then the enemy flies with a constant y velocity but moves back and forth smoothly in
+the x direction.
+
+You create a variety of different enemies in the section “Setting Up the Enemies” by setting different
+variations of parameters.
+
+In a production game, if you don’t want to worry about handling the math yourself, you could consider
+using a tweening engine such as TweenJS (www.createjs.com/TweenJS), which can handle
+smoothly moving objects from one position to another in a number of interesting manners.
+
+----
+Constructing the Enemy Object
+----
+You can create enemies from a blueprint that sets the sprite image used, the initial starting location,
+and the values for the movement of constants A–H. The constructor also enables an override object
+to be passed in to override the default blueprint settings.
+
+Much like PlayerMissile, the Enemy object adds methods onto the prototype to speed object creation
+and reduce the memory footprint.
+
+This initial version of Enemy looks much like the previous two sprite classes that have been built
+(PlayerShip and PlayerMissile), with a constructor function shown in in Listing 2-2 that initializes
+some state; a step method that updates the position and checks if the sprite is out of bounds;
+and a draw function that renders the sprite. Because of the need to copy over from the blueprint and
+any override parameters and set up the velocity equation parameters, the constructor function is a
+little more complicated than previous ones.
+
+JavaScript doesn’t have a built-in method to easily copy attributes over from another object, so you
+need to roll your own loop over the attributes to do it. To prevent the need for the blueprint to set
+each of the parameters A–H, each of those are also be initialized to zero.
+
+LISTING 2-2: The Enemy Constructor
+var Enemy = function(blueprint,override) {
+var baseParameters = { A: 0, B: 0, C: 0, D: 0,
+E: 0, F: 0, G: 0, H: 0 }
+// Set all the base parameters to 0
+for (var prop in baseParameters) {
+this[prop] = baseParameters[prop];
+}
+// Copy of all the attributes from the blueprint
+for (prop in blueprint) {
+this[prop] = blueprint[prop];
+}
+// Copy of all the attributes from the override, if present
+if(override) {
+for (prop in override) {
+this[prop] = override[prop];
+}
+}
+this.w = SpriteSheet.map[this.sprite].w;
+this.h = SpriteSheet.map[this.sprite].h;
+this.t = 0;
+}
+
+The constructor first copies three sets of objects into the this object: the base parameters, the blueprint,
+and the override. Because the enemy can have different sprites depending on the blueprint,
+the width and the height are set afterward based on the sprite property of the object. Finally, a
+t parameter is initialized to 0 to keep track of how long this sprite has been alive.
+If the repetition in this code bothers you, don’t worry! You clean it up in the section “Refactoring
+the Sprite Classes” later in this chapter.
+
+----
+Stepping and Drawing the Enemy Object
+----
+The step function (see Listing 2-3) for the enemy should update the velocity based on the aforementioned
+equation. The this.t property needs to be incremented by dt to keep track of how long the
+sprite has been alive. Next, the equation from earlier in this chapter can be plugged directly into the
+step function to calculate the x and y velocity. From the x and y velocity, the x and y location are
+updated. Finally, the sprite needs to check if it’s gone off the board to the right or the left, in which
+case the enemy can remove itself from the page.
+
+LISTING 2-3: The Enemy Step and Draw Methods
+Enemy.prototype.step = function(dt) {
+this.t += dt;
+this.vx = this.A + this.B * Math.sin(this.C * this.t + this.D);
+this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
+this.x += this.vx * dt;
+this.y += this.vy * dt;
+if(this.y > Game.height ||
+this.x < -this.w ||
+this.x > Game.width) {
+this.board.remove(this);
+}
+}
+Enemy.prototype.draw = function(ctx) {
+SpriteSheet.draw(ctx,this.sprite,this.x,this.y);
+}
+
+The draw function is a near duplicate of the PlayerMissile object; the only difference is that it
+must look up which sprite to draw in a property called sprite.
+
+----
+Adding Enemies on the Board
+----
+Now you add some initial enemy sprites to the top of game.js along with a simple enemy blueprint
+for one enemy that can fly down the page:
+
+var sprites = {
+ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
+missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 },
+enemy_purple: { sx: 37, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_bee: { sx: 79, sy: 0, w: 37, h: 43, frames: 1 },
+enemy_ship: { sx: 116, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_circle: { sx: 158, sy: 0, w: 32, h: 33, frames: 1 }
+};
+var enemies = {
+basic: { x: 100, y: -50, sprite: 'enemy_purple', B: 100, C: 2 , E: 100 }
+};
+
+Next, modify playGame to add a pair of enemies to the top of the page:
+
+var playGame = function() {
+var board = new GameBoard();
+board.add(new Enemy(enemies.basic));
+board.add(new Enemy(enemies.basic, { x: 200 }));
+board.add(new PlayerShip());
+Game.setBoard(3,board);
+}
+
+Using the enemies object as a blueprint for the enemy makes adding an enemy onto the page as
+simple as calling new Enemy() with that blueprint. To make the second enemy appear to the right of
+the first, an override object is passed in setting x to 200.
+
+Reload the file, and when the game starts, you should have a couple of bad guys snake their way
+down the screen and then disappear off the bottom. You can also take a look at http://mh5gd.
+com/ch2/enemies to see the effect this code has. These enemies aren’t doing any collision detection,
+so they won’t interact with the player.
+
+The basic enemy has only three of the enemy movement parameters defined: B (horizontal sinusoidal
+movement), C (horizontal sinusoidal period), and E (vertical fixed movement). Play with these
+parameters to affect the movement. Increasing C, for example, increases the frequency with which
+the enemies bounce back and forth.
+
+
+----
+2.4 REFACTORING THE SPRITE CLASSES
+----
+At this point the game has three different sprite classes that all share a lot of the same boilerplate
+code. This means it’s time to apply the Rule of Three.
+
+As described by Wikipedia, the rule is:
+
+Rule of three is a code refactoring rule of thumb to decide when a replicated piece
+of code should be replaced by a new procedure. It states that the code can be copied
+once, but that when the same code is replicated three times, it should be extracted
+into a new procedure. The rule was introduced by Martin Fowler in Refactoring and
+attributed to Don Roberts.
+
+http://en.wikipedia.org/wiki/Rule_of_three_(computer_programming)
+
+Even though Alien Invasion is a one-off game engine that isn’t intended to be turned into a generalpurpose
+engine, it still pays to put in a little bit of time to refactor the code when it makes sense to
+clean up any rampant duplication and make the game easier to fix and extend.
+
+No one writes perfect code the first time, especially when prototyping and trying out new features.
+When that code works, however, failing to refactor and clean up code during development leads
+to technical debt. The more technical debt you have on a project, the more painful it is to make
+changes and add new features. Refactoring can clean up technical debt by removing unused code,
+reducing code duplication, and cleaning up abstractions, all things that don’t make your game better
+necessarily but make your life as a game developer better.
+
+In Alien Invasion, the main culprits of duplication in these three sprite classes are the boilerplate
+setup code and the draw method, which is the same across all three methods. It’s time to extract
+those into a base object called Sprite, which can handle initialization given a set of setup parameters
+as well as a sprite to use. Inside the Enemy constructor, the three loops to copy one object into
+another is also a good opportunity for refactoring.
+
+If you haven’t done a lot of prototypical inheritance in JavaScript, the syntax may look strange.
+Because JavaScript doesn’t have the idea of classes, instead of defining a class that represents the
+inherited properties, you create a prototype object where JavaScript will look when a parameter isn’t
+defined on the actual object.
+
+----
+Creating a Generic Sprite Class
+----
+In this section you create the Sprite object that all other sprites inherit from. Open up engine.js
+and add the following code shown in Listing 2-4:
+
+LISTING 2-4: A Generic Sprite Object
+var Sprite = function() { }
+Sprite.prototype.setup = function(sprite,props) {
+this.sprite = sprite;
+this.merge(props);
+this.frame = this.frame || 0;
+this.w = SpriteSheet.map[sprite].w;
+this.h = SpriteSheet.map[sprite].h;
+}
+Sprite.prototype.merge = function(props) {
+if(props) {
+for (var prop in props) {
+this[prop] = props[prop];
+}
+}
+}
+Sprite.prototype.draw = function(ctx) {
+SpriteSheet.draw(ctx,this.sprite,this.x,this.y,this.frame);
+}
+
+This code goes into engine.js because it’s generic engine code versus game-specific code. The constructor
+function is empty because each sprite has its own constructor function, and the Sprite
+object is created only once for each of the descendant sprite object definitions. Constructor functions
+in JavaScript don’t work the same as constructors in other OO languages such as C++. To get
+around this, you need a separate setup function to be called explicitly in the descendant objects.
+
+This setup method takes in the name of the sprite in the SpriteSheet and a properties object. The
+sprite is saved in the object, and then properties are copied over into the Sprite. The width and
+height are also set here as well.
+
+Because copying over properties into an object is such a common need, Sprite also defines a merge
+method that does just that. This method is used in the setup method.
+
+Finally, the draw method, which is nearly identical in every sprite so far, can be defined once here
+and then will be available in every other sprite.
+
+----
+Refactoring PlayerShip
+----
+Armed with the Sprite class, the PlayerShip object can be refactored to simplify setup. The new
+code is marked in bold in Listing 2-5:
+
+LISTING 2-5: A Refactored PlayerShip
+var PlayerShip = function() {
+this.setup('ship', { vx: 0, frame: 1, reloadTime: 0.25, maxVel: 200 });
+this.reload = this.reloadTime;
+this.x = Game.width/2 - this.w / 2;
+this.y = Game.height - 10 - this.h;
+this.step = function(dt) {
+if(Game.keys['left']) { this.vx = -this.maxVel; }
+else if(Game.keys['right']) { this.vx = this.maxVel; }
+else { this.vx = 0; }
+this.x += this.vx * dt;
+if(this.x < 0) { this.x = 0; }
+else if(this.x > Game.width - this.w) {
+this.x = Game.width - this.w
+}
+this.reload-=dt;
+if(Game.keys['fire'] && this.reload < 0) {
+this.reload = this.reloadTime;
+this.board.add(new PlayerMissile(this.x,this.y+this.h/2));
+this.board.add(new PlayerMissile(this.x+this.w,this.y+this.h/2));
+}
+}
+}
+PlayerShip.prototype = new Sprite();
+
+At the top of the constructor function, the setup method is called, wiping out some boilerplate
+code. A few of the properties are set when setup is called, but a few are set afterward because they
+depend on the values of the other properties such as the object’s width and height, which isn’t available
+until after setup is called. Next, the draw method is removed because it is handled by Sprite.
+
+Finally, the code to actually set up PlayerShip’s prototype comes after the PlayerShip constructor
+function is defined.
+
+----
+Refactoring PlayerMissile
+----
+The PlayerMissile object was already compact, but refactoring helps make it even shorter. See
+Listing 2-6.
+
+LISTING 2-6: Refactored PlayerMissile
+var PlayerMissile = function(x,y) {
+this.setup('missile',{ vy: -700 });
+this.x = x - this.w/2;
+this.y = y - this.h;
+};
+PlayerMissile.prototype = new Sprite();
+PlayerMissile.prototype.step = function(dt) {
+this.y += this.vy * dt;
+if(this.y < -this.h) { this.board.remove(this); }
+};
+
+The constructor method still needs to explicitly set the x and y location because these are dependent on
+the width and height of the sprite (which aren’t available until after setup is called). The step method
+is unaffected by the refactoring, and the draw method can be removed as it’s handled by Sprite.
+
+----
+Refactoring Enemy
+----
+The Enemy object benefits the most from the refactoring, particularly in the constructor method.
+Instead of using a number of loops to copy parameters into the object, a few calls to merge simplify
+the method down to three lines. See Listing 2-7.
+
+LISTING 2-7: Refactored Enemy Object (Partial Code)
+var Enemy = function(blueprint,override) {
+this.merge(this.baseParameters);
+this.setup(blueprint.sprite,blueprint);
+this.merge(override);
+}
+Enemy.prototype = new Sprite();
+Enemy.prototype.baseParameters = { A: 0, B: 0, C: 0, D: 0,
+E: 0, F: 0, G: 0, H: 0,
+t: 0 };
+
+The step method is unaffected (and so isn't shown in Listing 2-7) and the draw method can be
+removed. Notice that merge is called explicitly to merge in the set of baseParameters and the
+override parameters. The predefined baseParameters object is also pulled out of the constructor
+and put into the prototype. Although not a huge optimization, it prevents the need for the static
+baseParameters object to be re-created each time a new Enemy is created just for the sake of being
+copied over into the object. Because baseParameters isn’t going to be modified, one copy of the
+object will do.
+
