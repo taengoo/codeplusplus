@@ -769,3 +769,445 @@ baseParameters object to be re-created each time a new Enemy is created just for
 copied over into the object. Because baseParameters isn’t going to be modified, one copy of the
 object will do.
 
+
+----
+2.5 HANDLING COLLISIONS
+----
+Alien Invasion is slowly coming together. It now has a player, missiles, and enemies flying around
+the screen. Unfortunately, none of these pieces are interacting by blowing each other up as is
+expected in a save-the-planet-from-destruction shooter game.
+The good news is that the majority of the hard work for handling collisions has already been done.
+The GameBoard object already knows how to take two objects and figure out if they are overlapping
+as well as determine if one object is colliding with any others of a specific type. All that’s necessary
+now is to add the appropriate calls to those collision functions.
+For collisions, Alien Invasion can use two mechanisms. The first is to do proactive checks in every
+object’s step function against any objects it has an interaction with. The second would be to have
+a general collision phase where objects trigger collision events when they hit each other. The former
+is simpler to implement, whereas the latter offers better overall performance and can be better optimized.
+Alien Invasion is going to go the simpler route, but the platformer game built in Chapter 18,
+“Creating a 2-D Platformer,” uses the more complicated mechanism.
+
+----
+Adding Object Types
+----
+To ensure that objects collide only with objects that it makes sense for them to collide with, objects
+need to be assigned types. This was discussed at the beginning of the chapter but has not yet been
+implemented in the game. The first step is to determine the different object types the game has and
+add some constants to keep from having to use magic numbers in the code.
+
+Add the code from Listing 2-8 to the top of game.js to define five different types of objects.
+
+LISTING 2-8: Object Types
+var OBJECT_PLAYER = 1,
+OBJECT_PLAYER_PROJECTILE = 2,
+OBJECT_ENEMY = 4,
+OBJECT_ENEMY_PROJECTILE = 8,
+OBJECT_POWERUP = 16;
+
+NOTE Each of these types shown in Listing 2-8 is a power of two, which is an
+efficiency optimization to enable the use of bitwise logic as discussed earlier.
+
+Next, add three lines to game.js setting the type of each Sprite at an appropriate spot after each
+Sprite’s prototype assignment code:
+
+PlayerShip.prototype = new Sprite();
+PlayerShip.prototype.type = OBJECT_PLAYER;
+...
+PlayerMissile.prototype = new Sprite();
+PlayerMissile.prototype.type = OBJECT_PLAYER_PROJECTILE;
+...
+Enemy.prototype = new Sprite();
+Enemy.prototype.type = OBJECT_ENEMY;
+Each object now has a type that can be used for collision detection.
+
+----
+Colliding Missiles with Enemies
+----
+To prevent duplicated effort, instead of objects checking for collisions with every type of object
+they might hit, objects check only against objects that they actually “want” to hit. This means that
+PlayerMissile objects check if they are colliding with Enemy objects, but Enemy objects won’t
+check if they are colliding with PlayerMissile objects. Doing so keeps the number of calculations
+down a little bit.
+
+Now that objects can be hit, they need to have a method to deal with what should happen when
+they are hit. To begin with, add a method to Sprite that removes an object whenever it gets hit.
+This method can be overridden down the road by the various inherited objects.
+
+Add the following function to the bottom of engine.js below the rest of the Sprite object definition:
+
+Sprite.prototype.hit = function(damage) {
+this.board.remove(this);
+}
+
+This initial version of the hit method just removes the object from the board, regardless of the
+amount of damage done.
+
+Add a damage value to the PlayerMissile constructor function:
+
+var PlayerMissile = function(x,y) {
+this.setup('missile',{ vy: -700, damage: 10 });
+this.x = x - this.w/2;
+this.y = y - this.h;
+};
+
+Next, open up game.js, and edit the PlayerMissile step method to check for collisions:
+
+PlayerMissile.prototype.step = function(dt) {
+this.y += this.vy * dt;
+var collision = this.board.collide(this,OBJECT_ENEMY);
+if(collision) {
+collision.hit(this.damage);
+this.board.remove(this);
+} else if(this.y < -this.h) {
+this.board.remove(this);
+}
+};
+
+The missile checks to see if it’s colliding with any OBJECT_ENEMY type objects and then calls the
+hit method on whatever object it collides with. It then removes itself from the board because its
+job is done.
+
+Fire up the game, and you should be able to shoot down the two enemies flying down the screen.
+
+----
+Colliding Enemies with the Player
+----
+To make it a fair fight, enemies need to have the ability to take down the player as well when they
+make contact.
+
+Adding essentially the same chunk of code to the Enemy step method allows the Enemy to take out
+the player. Modify the step method to read as follows:
+
+Enemy.prototype.step = function(dt) {
+this.t += dt;
+this.vx = this.A + this.B * Math.sin(this.C * this.t + this.D);
+this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
+this.x += this.vx * dt;
+this.y += this.vy * dt;
+var collision = this.board.collide(this,OBJECT_PLAYER);
+if(collision) {
+collision.hit(this.damage);
+this.board.remove(this);
+}
+if(this.y > Game.height ||
+this.x < -this.w ||
+this.x > Game.width) {
+this.board.remove(this);
+}
+}
+
+This code is identical to the code added to the PlayerMissile object except that it calls collide
+with an OBJECT_PLAYER object type.
+
+After making those changes, fire up the game and let your player be taken out by one of the ships.
+
+----
+Making It Go Boom
+----
+So far the collisions have the correct effect; however, there’s something to be said for a more dramatic
+effect to liven things up. The sprites.png file has a nice explosion animation in there for just that
+reason. The explosion image was generated using the explosion generator on http://www.positech
+.co.uk/.
+
+Add the sprite definition to the top of game.js for the explosion:
+
+var sprites = {
+ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
+missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 },
+enemy_purple: { sx: 37, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_bee: { sx: 79, sy: 0, w: 37, h: 43, frames: 1 },
+enemy_ship: { sx: 116, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_circle: { sx: 158, sy: 0, w: 32, h: 33, frames: 1 },
+explosion: { sx: 0, sy: 64, w: 64, h: 64, frames: 12 }
+};
+
+Now add some health to the blueprint for a basic enemy:
+
+var enemies = {
+basic: { x: 100, y: -50, sprite: 'enemy_purple',
+B: 100, C: 4, E: 100, health: 20 }
+};
+
+Next, you need to override the default hit method from Sprite for the Enemy object. This method
+needs to reduce the health of the Enemy, so check if the Enemy has run out of health; if so add an
+explosion to the GameBoard at the center of the Enemy, as shown in Listing 2-9.
+
+LISTING 2-9: Enemy Hit Method
+Enemy.prototype.hit = function(damage) {
+this.health -= damage;
+if(this.health <=0) {
+if(this.board.remove(this)) {
+this.board.add(new Explosion(this.x + this.w/2,
+this.y + this.h/2));
+}
+}
+}
+
+Finally, the Explosion class needs to be built. The class is a basic sprite that when added onto the
+page just flips itself through its frames and then removes itself from the board. See Listing 2-10.
+
+LISTING 2-10: The Explosion Object
+var Explosion = function(centerX,centerY) {
+this.setup('explosion', { frame: 0 });
+this.x = centerX - this.w/2;
+this.y = centerY - this.h/2;
+this.subFrame = 0;
+};
+Explosion.prototype = new Sprite();
+Explosion.prototype.step = function(dt) {
+this.frame = Math.floor(this.subFrame++ / 3);
+if(this.subFrame >= 36) {
+this.board.remove(this);
+}
+};
+
+The Explosion constructor method takes the passed in centerX and centerY position and adjusts
+the x and y location by moving the sprite half of its width to the left and half the height up. The
+step method doesn’t need to worry about moving the explosion each frame; it just needs to update
+the subFrame property to cycle through each of the frames of the explosion animation. Each frame
+of the explosion animation plays for three game frames to make it last a little bit longer. When all
+36 subFrames of the explosion have played through (12 actual frames), the Explosion removes
+itself from the board.
+
+Reload the game, and try to take out the enemies flying down the screen. It should take two missiles
+to take out an enemy now, but that enemy should explode in a nice fiery blast.
+
+
+----
+2.6 REPRESENTING LEVELS
+----
+Alien Invasion now has all the mechanics necessary to play the game. The only missing component
+is to put together some level data and a mechanism for adding enemy ships onto the screen.
+
+Before getting into the levels, add a few more enemy types to give some variety to the page.
+
+----
+Setting Up the Enemies
+----
+You could create an endless number of variations of enemy movement, but for this game you’ll
+set up five different types of enemy behavior using the various enemy sprite types as a start. You
+can play with the definitions and add more if you like. You could make a number of other variations,
+but this set of five is a good start. Replace the enemies definition at the top of game.js with
+Listing 2-11.
+
+LISTING 2-11: Enemy Definitions
+var enemies = {
+straight: { x: 0, y: -50, sprite: 'enemy_ship', health: 10,
+E: 100 },
+ltr: { x: 0, y: -100, sprite: 'enemy_purple', health: 10,
+B: 200, C: 1, E: 200 },
+circle: { x: 400, y: -50, sprite: 'enemy_circle', health: 10,
+A: 0, B: -200, C: 1, E: 20, F: 200, G: 1, H: Math.PI/2 },
+wiggle: { x: 100, y: -50, sprite: 'enemy_bee', health: 20,
+B: 100, C: 4, E: 100 },
+step: { x: 0, y: -50, sprite: 'enemy_circle', health: 10,
+B: 300, C: 1.5, E: 60 }
+};
+
+With just a variation on the movement parameters, the enemies have wildly differing movement
+styles. The straight enemy has only vertical velocity parameter E, so it moves downward at a constant
+rate.
+
+The ltr enemy (short for left-to-right) has a constant vertical velocity, but then a sinusoidal horizontal
+velocity (parameters B and C) gives it a smooth sweeping motion from left to right.
+
+The circle has primarily sinusoidal motion in both directions, but adds a time shift in the Y direction
+with parameter H to give a circular motion to the enemy.
+
+The wiggle and the step enemies have the same parameters set, just to different amounts. With a
+smaller B value and larger C and E values, the wiggle enemy just snakes down the screen, while the
+step enemy, with a larger B and a smaller C and E, makes its way down the page slowly by sliding
+back and forth across the whole screen.
+
+----
+Setting Up Level Data
+----
+Knowing that levels in Alien Invasion will be populated with strings of enemies of the same type,
+the next step is to figure out a good mechanism for encoding the level data in a compact manner.
+When that has been figured out, you can work backward and figure out what the level object needs
+to do to spawn those enemies onto the page. Working from how you want to use a piece of code
+back to the implementation is a good way to end up with code that is easy to work with. It may take
+a little bit more work on the implementation, but you’ll be happier in the long run.
+
+One initial impulse you might have would be to encode the starting location of each enemy and each
+enemy type in an array. Because a level might have a hundred or more enemies, this would get laborious
+quickly. A better option is to encode each string of enemies as a single entry with a start time,
+end time, and per-enemy delay. This way each string of enemies is succinctly encoded into the level
+data, and you can take one look at the definition and get a good understanding of what's going on.
+Add the level data for level 1 to the top of game.js by inserting Listing 2-12.
+
+LISTING 2-12: Level Data
+var level1 = [
+// Start, End, Gap, Type, Override
+[ 0, 4000, 500, 'step' ],
+[ 6000, 13000, 800, 'ltr' ],
+[ 12000, 16000, 400, 'circle' ],
+[ 18200, 20000, 500, 'straight', { x: 150 } ],
+[ 18200, 20000, 500, 'straight', { x: 100 } ],
+[ 18400, 20000, 500, 'straight', { x: 200 } ],
+[ 22000, 25000, 400, 'wiggle', { x: 300 }],
+[ 22000, 25000, 400, 'wiggle', { x: 200 }]
+];
+
+Each line gives a start time in milliseconds, an end time in milliseconds, and a gap in milliseconds
+between each enemy followed by the enemy type and any override parameters.
+
+----
+Loading and Finishing a Level
+----
+Defining how the level class is going to consume level data is half the battle; the other half is deciding
+on how the Level object will be used by the PlayGame method to start the game. The easiest
+solution is to simply create another sprite-like object that is added to the game board and spawns
+enemies at the correct time intervals. When the Level is out of enemies, it can make a callback to
+indicate success.
+
+Again working backward, you write the way the Level object should be used before tackling the
+actual implementation. Replace the existing playGame method with the one shown in Listing 2-13,
+and add new winGame and loseGame methods as well.
+
+LISTING 2-13: Modified Game Initialization Methods
+var playGame = function() {
+var board = new GameBoard();
+board.add(new PlayerShip());
+board.add(new Level(level1,winGame));
+Game.setBoard(3,board);
+}
+var winGame = function() {
+Game.setBoard(3,new TitleScreen("You win!",
+"Press fire to play again",
+playGame));
+}
+var loseGame = function() {
+Game.setBoard(3,new TitleScreen("You lose!",
+"Press fire to play again",
+playGame));
+}
+
+Adding the level becomes as trivial as adding a new Level sprite to the board and passing in the
+level data level1 and the success callback winGame.
+
+The winGame method just reuses the TitleScreen object to show a success message and a message
+letting the player know they can replay the game.
+
+The loseGame method works the same way as the winGame method but with a less congratulatory
+message. Lose game so far isn’t called yet anywhere, but this can be remedied by adding a custom
+hit method to the PlayShip object. Add the following definition to game.js under the rest of the
+PlayerShip methods (make sure to add it underneath where the prototype is set):
+
+PlayerShip.prototype.hit = function(damage) {
+if(this.board.remove(this)) {
+loseGame();
+}
+}
+
+The PlayerShip doesn’t get an explosion when it dies; this is just for simplicity’s sake. However,
+you could add one in and add a callback to the end of the explosion step to show the loseGame
+screen only after the PlayerShip has finished blowing up.
+
+----
+Implementing the Level Object
+----
+All that’s left now is the implementation of the Level object. This object’s duties have already been
+defined by how the level data and playGame and winGame methods were set up. The Level object
+has only two methods: the constructor function, which makes a copy of the level data for its own
+use (and modification) and the step method, which loops through the level data and adds enemies
+onto the board as necessary.
+
+Add the constructor function shown in Listing 2-14 to the bottom of engine.js.
+
+LISTING 2-14: Level Object Constructor
+var Level = function(levelData,callback) {
+this.levelData = [];
+for(var i =0; i<levelData.length; i++) {
+this.levelData.push(Object.create(levelData[i]));
+}
+this.t = 0;
+this.callback = callback;
+}
+
+The one major responsibility of the constructor function is to make a deep copy of the passed-in
+level data. Cloning the data is necessary because the method is going to modify the level data as the
+level progresses. Because objects are passed by reference in JavaScript, this would prevent the level
+from being reused if the player were to play the level a second time.
+
+The cloning is slightly more complicated than it seems because JavaScript doesn’t have a built-in
+mechanism for deep cloning a list of objects inside an Array. To get around this, each entry in the
+level data is looped over and the built-in Object.create method is called to create a new object
+with the existing data as the prototype. That new object is then pushed onto a new Array.
+
+Next is the meat of the Level object, the step method. Even though Level isn’t a normal Sprite,
+it’s going to pretend it is and behave like one by responding to the step and draw methods. The step
+method in Listing 2-15 has the responsibility to keep track of the current time and dropping enemies
+onto the page in sequence.
+
+LISTING 2-15: Level Step Method
+Level.prototype.step = function(dt) {
+var idx = 0, remove = [], curShip = null;
+// Update the current time offset
+this.t += dt * 1000;
+// Example levelData
+// Start, End, Gap, Type, Override
+// [[ 0, 4000, 500, 'step', { x: 100 } ]
+while((curShip = this.levelData[idx]) &&
+(curShip[0] < this.t + 2000)) {
+// Check if past the end time
+if(this.t > curShip[1]) {
+// If so, remove the entry
+remove.push(curShip);
+} else if(curShip[0] < this.t) {
+// Get the enemy definition blueprint
+var enemy = enemies[curShip[3]],
+override = curShip[4];
+// Add a new enemy with the blueprint and override
+this.board.add(new Enemy(enemy,override));
+// Increment the start time by the gap
+curShip[0] += curShip[2];
+}
+idx++;
+}
+// Remove any objects from the levelData that have passed
+for(var i=0,len=remove.length;i<len;i++) {
+var idx = this.levelData.indexOf(remove[i]);
+if(idx != -1) this.levelData.splice(idx,1);
+}
+// If there are no more enemies on the board or in
+// levelData, this level is done
+if(this.levelData.length == 0 && this.board.cnt[OBJECT_ENEMY] == 0) {
+if(this.callback) this.callback();
+}
+}
+// Dummy method, doesn't draw anything
+Level.prototype.draw = function(ctx) { }
+
+This is a complex method. The method is broken into three main sections:
+- The first section uses a while statement to loop over the beginning of the levelData array
+until it gets past any active ships. (This prevents the need to loop over every element in the
+array.) For each row in the level data, it checks if it is passed the end value (the second element
+of the array). If so, it adds that element to a list of elements to be removed from the
+levelData array. If not, it pulls out the enemy blueprint and the override and adds a new
+enemy onto the board. It then increments the start value (the first element of the array) by
+the length of between-enemy gap. Modifying the start time allows the step method to handle
+adding a string of enemies on the page without any additional logic.
+- The second section of the step method should look familiar from the GameBoard object. All
+it is does is look at all the entries in levelData that have been added to the remove list and
+splices them out of the array, much like the finalizeRemoved method in GameBoard did.
+- The final section consists of a conditional that checks if there are no more upcoming enemies
+in levelData and if the number of enemies on the board is zero. If both of those conditions
+are true, then the level is considered over, and the callback, if one is set, is called. This allows
+the level to know when it has been completed.
+Finally, the Level object needs a draw method so that it can play nicely with GameBoard, but that
+method is just a stub that doesn’t actually do anything.
+Fire up the game with all the Level pieces in, and you should see the game and enemies in all their
+glory.
+
+
+----
+2.7 SUMMARY
+----
+Congratulations! You took the stub of a game—a lonely spaceship flying around empty space—and
+turned it into a playable game with waves of enemies and win and failure screens.
+
+You may have noticed a slight issue so far, though—it's not mobile. The next chapter remedies this
+when you add touch controls and support for resizing. A few finishing touches, such as scoring, can
+turn Alien Invasion into a polished, playable mobile game that works on the desktop as well.
+
